@@ -1,0 +1,135 @@
+{
+    "size": 5,
+    "nodes": {
+        "A1": {
+            "name": "A1",
+            "stats": {
+                "foodPerRound": 0,
+                "menPerRound": 0
+            },
+            "neighbors": {
+                "top": "",
+                "bottom": "A4",
+                "left": "",
+                "right": "A2"
+            }
+        },
+        "A2": {
+            "name": "A2",
+            "stats": {
+                "foodPerRound": 0,
+                "menPerRound": 0
+            },
+            "neighbors": {
+                "top": "",
+                "bottom": "",
+                "left": "A1",
+                "right": "A3"
+            }
+        },
+        "A3": {
+            "name": "A3",
+            "stats": {
+                "foodPerRound": 0,
+                "menPerRound": 0
+            },
+            "neighbors": {
+                "top": "",
+                "bottom": "A9",
+                "left": "A2",
+                "right": ""
+            }
+        },
+        "A4": {
+            "name": "A4",
+            "stats": {
+                "foodPerRound": 0,
+                "menPerRound": 0
+            },
+            "neighbors": {
+                "top": "A1",
+                "bottom": "A5",
+                "left": "",
+                "right": ""
+            }
+        },
+        "A5": {
+            "name": "A5",
+            "stats": {
+                "foodPerRound": 0,
+                "menPerRound": 0
+            },
+            "neighbors": {
+                "top": "A4",
+                "bottom": "",
+                "left": "",
+                "right": "A6"
+            }
+        },
+        "A6": {
+            "name": "A6",
+            "stats": {
+                "foodPerRound": 0,
+                "menPerRound": 0
+            },
+            "neighbors": {
+                "top": "",
+                "bottom": "",
+                "left": "A5",
+                "right": "A7"
+            }
+        },
+        "A7": {
+            "name": "A7",
+            "stats": {
+                "foodPerRound": 0,
+                "menPerRound": 0
+            },
+            "neighbors": {
+                "top": "A9",
+                "bottom": "A10",
+                "left": "A6",
+                "right": ""
+            }
+        },
+        "A8": {
+            "name": "A8",
+            "stats": {
+                "foodPerRound": 0,
+                "menPerRound": 0
+            },
+            "neighbors": {
+                "top": "",
+                "bottom": "",
+                "left": "A9",
+                "right": ""
+            }
+        },
+        "A9": {
+            "name": "A9",
+            "stats": {
+                "foodPerRound": 0,
+                "menPerRound": 0
+            },
+            "neighbors": {
+                "top": "A3",
+                "bottom": "A7",
+                "left": "",
+                "right": "A8"
+            }
+        },
+        "A10": {
+            "name": "A10",
+            "stats": {
+                "foodPerRound": 0,
+                "menPerRound": 0
+            },
+            "neighbors": {
+                "top": "A7",
+                "bottom": "",
+                "left": "",
+                "right": ""
+            }
+        }
+    }
+}

@@ -1,30 +1,26 @@
 import { Room, Client, CloseCode } from "colyseus";
-import { MyRoomState, Player } from "./schema/MyRoomState.js";
+import { GameRoomState, Player } from "./schema/GameRoomState.js";
+import { createMap } from "./MapGeneration/MapGenerator.js";
+import { loadMapJSON } from "../MapCreation/MapTranslator.js";
 
 export class MyRoom extends Room {
   maxClients = 4;
-  state = new MyRoomState();
+  state = new GameRoomState();
+  defaultMap = "../../../Resources/Maps/Debug.json";
 
   onCreate (options: any) {
-      this.onMessage("leftClick", (client: Client) => {
-
-      console.log("Left click from", client.sessionId);
-      const player = this.state.players.get(client.sessionId);
-      player.men += 1;
-      console.log(client.sessionId, "now has", player.men, "men"!);
-    });
-
-    this.onMessage("rightClick", (client: Client) => {
-
-      console.log("Right click from", client.sessionId);
-    });
+    try {
+      const mapJson = loadMapJSON(this.defaultMap);
+      createMap(this.state.map, mapJson);
+      console.log("Map successfully created");
+    } catch (err) {
+      console.error("Map creation failed:", err);
+    }
   }
 
   onJoin (client: Client, options: any) {
     console.log(client.sessionId, "joined!");
     const player = new Player();
-    player.men = 10;
-    
     this.state.players.set(client.sessionId, player);
   }
 

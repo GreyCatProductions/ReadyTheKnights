@@ -1,0 +1,715 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GameMap JSON Editor</title>
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --panel: #101826;
+      --panel2: #0f172a;
+      --border: rgba(255,255,255,.10);
+      --muted: rgba(255,255,255,.65);
+      --text: rgba(255,255,255,.92);
+      --danger: #ff4d4d;
+      --ok: #45d483;
+      --accent: #7aa2ff;
+      --cell: rgba(255,255,255,.06);
+      --cell2: rgba(255,255,255,.03);
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 16px;
+      font-synthesis: none;
+      text-rendering: optimizeLegibility;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: radial-gradient(1200px 800px at 20% 10%, rgba(122,162,255,.18), transparent 60%),
+                  radial-gradient(900px 600px at 90% 30%, rgba(69,212,131,.10), transparent 55%),
+                  var(--bg);
+      color: var(--text);
+      font: 14px/1.35 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    }
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 18px; }
+    .grid2 {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 980px) { .grid2 { grid-template-columns: 1fr; } }
+
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .card h2, .card h3 { margin: 0; font-weight: 650; letter-spacing: .2px; }
+    .head { padding: 14px 14px 10px; border-bottom: 1px solid var(--border); background: rgba(0,0,0,.08); }
+    .sub { margin-top: 6px; color: var(--muted); font-size: 12px; }
+    .body { padding: 14px; }
+
+    .row { display: flex; gap: 10px; align-items: end; flex-wrap: wrap; }
+    label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+    input[type="text"], input[type="number"], textarea, select {
+      width: 100%;
+      padding: 9px 10px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,.25);
+      color: var(--text);
+      outline: none;
+    }
+    input[type="checkbox"] { transform: translateY(1px); }
+    textarea { min-height: 210px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+
+    .field { width: 140px; }
+    .field.small { width: 110px; }
+    .field.grow { flex: 1; min-width: 220px; }
+
+    .btn {
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,.22);
+      color: var(--text);
+      padding: 9px 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: transform .05s ease, background .15s ease, border-color .15s ease;
+      user-select: none;
+      white-space: nowrap;
+    }
+    .btn:hover { background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.18); }
+    .btn:active { transform: translateY(1px); }
+    .btn.primary { background: rgba(122,162,255,.18); border-color: rgba(122,162,255,.35); }
+    .btn.danger { background: rgba(255,77,77,.14); border-color: rgba(255,77,77,.35); }
+    .btn.secondary { background: rgba(255,255,255,.06); }
+
+    .chips { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .chip {
+      padding: 4px 9px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 12px;
+      background: rgba(0,0,0,.20);
+    }
+    .chip.ok { color: var(--ok); border-color: rgba(69,212,131,.35); background: rgba(69,212,131,.08); }
+    .chip.bad { color: var(--danger); border-color: rgba(255,77,77,.35); background: rgba(255,77,77,.08); }
+    .chip strong { color: var(--text); font-weight: 650; }
+
+    .mode {
+      display: inline-flex;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      background: rgba(0,0,0,.18);
+    }
+    .mode button {
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      padding: 8px 10px;
+      cursor: pointer;
+      font: inherit;
+    }
+    .mode button.active {
+      background: rgba(255,255,255,.07);
+      color: var(--text);
+    }
+
+    .gridbox {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: auto;
+      background: rgba(0,0,0,.14);
+    }
+    .grid {
+      display: grid;
+      gap: 0;
+      min-width: 360px;
+    }
+    .cell {
+      height: 46px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: var(--cell2);
+      cursor: pointer;
+      font-size: 12px;
+      color: var(--muted);
+      position: relative;
+    }
+    .cell.filled { background: var(--cell); color: var(--text); font-weight: 650; }
+    .cell.selected { outline: 2px solid var(--accent); outline-offset: -2px; }
+    .cell:hover { background: rgba(255,255,255,.07); }
+
+    .issues {
+      margin-top: 10px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,77,77,.35);
+      background: rgba(255,77,77,.08);
+      padding: 10px 12px;
+    }
+    .issues h4 { margin: 0 0 6px; font-size: 13px; }
+    .issues ul { margin: 0; padding-left: 18px; color: rgba(255,255,255,.85); }
+    .muted { color: var(--muted); font-size: 12px; }
+    .sep { height: 1px; background: var(--border); margin: 12px 0; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="grid2">
+    <div class="card">
+      <div class="head">
+        <h2>GameMap Editor (HTML)</h2>
+        <div class="sub">Produces <code>{ size, nodes: { id: { name, stats, neighbors } } }</code> JSON for your server.</div>
+      </div>
+      <div class="body">
+        <div class="row">
+          <div class="field small">
+            <label>Size</label>
+            <input id="sizeInput" type="number" min="1" max="30" value="6" />
+          </div>
+          <div class="field small">
+            <label>ID prefix</label>
+            <input id="prefixInput" type="text" value="A" />
+          </div>
+          <div class="field small">
+            <label>Next #</label>
+            <input id="counterInput" type="number" min="1" value="1" />
+          </div>
+
+          <div class="field grow">
+            <label>Mode</label>
+            <div class="row" style="align-items:center; gap:10px;">
+              <div class="mode" id="modeButtons">
+                <button data-mode="place" class="active">Place</button>
+                <button data-mode="select">Select</button>
+                <button data-mode="erase">Erase</button>
+              </div>
+              <button class="btn secondary" id="autoBtn">Auto-neighbors</button>
+              <button class="btn danger" id="clearBtn">Clear</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="sep"></div>
+
+        <div class="chips" id="statusChips"></div>
+
+        <div style="height:12px;"></div>
+
+        <div class="gridbox">
+          <div id="grid" class="grid"></div>
+        </div>
+
+        <div id="issuesBox" class="issues" style="display:none;"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="head">
+        <h3>Inspector</h3>
+        <div class="sub">Edit stats & neighbors for the selected node.</div>
+      </div>
+      <div class="body">
+        <div class="chips">
+          <span class="chip">Selected: <strong id="selectedLabel">—</strong></span>
+          <label class="chip" style="display:flex; gap:8px; align-items:center;">
+            <input id="biCheck" type="checkbox" />
+            Enforce bidirectional
+          </label>
+        </div>
+
+        <div class="sep"></div>
+
+        <div id="inspectorEmpty" class="muted">Select a node (click it in Place mode or use Select mode).</div>
+
+        <div id="inspector" style="display:none;">
+          <div class="row">
+            <div class="field grow">
+              <label>Rename node ID</label>
+              <input id="renameInput" type="text" />
+            </div>
+            <div>
+              <button class="btn secondary" id="renameBtn" style="margin-top:18px;">Rename</button>
+            </div>
+          </div>
+          <div class="muted" style="margin-top:6px;">Renaming updates grid + all neighbor references.</div>
+
+          <div class="sep"></div>
+
+          <div class="row">
+            <div class="field grow">
+              <label>foodPerRound</label>
+              <input id="foodInput" type="number" />
+            </div>
+            <div class="field grow">
+              <label>menPerRound</label>
+              <input id="menInput" type="number" />
+            </div>
+          </div>
+
+          <div class="sep"></div>
+
+          <div class="row">
+            <div class="field grow">
+              <label>top</label>
+              <input id="nbTop" type="text" />
+            </div>
+            <div class="field grow">
+              <label>bottom</label>
+              <input id="nbBottom" type="text" />
+            </div>
+          </div>
+          <div class="row" style="margin-top:10px;">
+            <div class="field grow">
+              <label>left</label>
+              <input id="nbLeft" type="text" />
+            </div>
+            <div class="field grow">
+              <label>right</label>
+              <input id="nbRight" type="text" />
+            </div>
+          </div>
+
+          <div class="muted" style="margin-top:8px;">
+            Empty string means “no neighbor”. Validation checks every non-empty neighbor exists.
+          </div>
+
+          <div class="sep"></div>
+
+          <div class="row">
+            <button class="btn primary" id="copyBtn">Copy JSON</button>
+            <button class="btn secondary" id="downloadBtn">Download JSON</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="grid-column: 1 / -1;">
+      <div class="head">
+        <h3>Import / Export (raw JSON)</h3>
+        <div class="sub">Paste JSON here to import. Export stays in sync.</div>
+      </div>
+      <div class="body">
+        <textarea id="ioArea"></textarea>
+        <div class="row" style="margin-top:10px;">
+          <button class="btn secondary" id="importBtn">Import JSON</button>
+          <button class="btn secondary" id="resetTextBtn">Reset textbox to current</button>
+        </div>
+        <div class="muted" style="margin-top:8px;">
+          Editor import is forgiving. Your server should still validate strictly at load time.
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // ===== State =====
+  let size = 6;
+  let grid = makeGrid(size);
+  let mode = "place";
+  let prefix = "A";
+  let counter = 1;
+  let selectedId = "";
+  let enforceBidirectional = false;
+
+  let map = emptyMap(size);
+
+  // ===== DOM refs =====
+  const gridEl = document.getElementById("grid");
+  const sizeInput = document.getElementById("sizeInput");
+  const prefixInput = document.getElementById("prefixInput");
+  const counterInput = document.getElementById("counterInput");
+  const modeButtons = document.getElementById("modeButtons");
+
+  const statusChips = document.getElementById("statusChips");
+  const issuesBox = document.getElementById("issuesBox");
+
+  const selectedLabel = document.getElementById("selectedLabel");
+  const inspectorEmpty = document.getElementById("inspectorEmpty");
+  const inspector = document.getElementById("inspector");
+
+  const renameInput = document.getElementById("renameInput");
+  const foodInput = document.getElementById("foodInput");
+  const menInput = document.getElementById("menInput");
+  const nbTop = document.getElementById("nbTop");
+  const nbBottom = document.getElementById("nbBottom");
+  const nbLeft = document.getElementById("nbLeft");
+  const nbRight = document.getElementById("nbRight");
+  const biCheck = document.getElementById("biCheck");
+
+  const ioArea = document.getElementById("ioArea");
+
+  // Buttons
+  document.getElementById("autoBtn").addEventListener("click", autoNeighborsFromGrid);
+  document.getElementById("clearBtn").addEventListener("click", clearAll);
+  document.getElementById("renameBtn").addEventListener("click", () => renameSelected(renameInput.value));
+  document.getElementById("copyBtn").addEventListener("click", copyJSON);
+  document.getElementById("downloadBtn").addEventListener("click", downloadJSON);
+  document.getElementById("importBtn").addEventListener("click", () => importFromText(ioArea.value));
+  document.getElementById("resetTextBtn").addEventListener("click", syncTextarea);
+
+  // Inputs
+  sizeInput.addEventListener("change", () => applyResize(parseInt(sizeInput.value || "1", 10)));
+  prefixInput.addEventListener("input", () => { prefix = (prefixInput.value || "A").replace(/\s+/g, "").slice(0, 6); });
+  counterInput.addEventListener("change", () => { counter = Math.max(1, parseInt(counterInput.value || "1", 10)); });
+  biCheck.addEventListener("change", () => { enforceBidirectional = !!biCheck.checked; renderAll(); });
+
+  // Mode switch
+  modeButtons.addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-mode]");
+    if (!btn) return;
+    mode = btn.dataset.mode;
+    [...modeButtons.querySelectorAll("button")].forEach(b => b.classList.toggle("active", b.dataset.mode === mode));
+  });
+
+  // Inspector change handlers
+  foodInput.addEventListener("change", () => updateSelectedStats());
+  menInput.addEventListener("change", () => updateSelectedStats());
+  nbTop.addEventListener("input", () => updateSelectedNeighbors());
+  nbBottom.addEventListener("input", () => updateSelectedNeighbors());
+  nbLeft.addEventListener("input", () => updateSelectedNeighbors());
+  nbRight.addEventListener("input", () => updateSelectedNeighbors());
+
+  // ===== Helpers =====
+  function makeGrid(s) {
+    return Array.from({ length: s }, () => Array.from({ length: s }, () => ""));
+  }
+  function emptyNeighbors() { return { top:"", bottom:"", left:"", right:"" }; }
+  function emptyMap(s) { return { size: s, nodes: {} }; }
+
+  function applyResize(newSize) {
+    const s = Math.max(1, Math.min(30, Math.floor(newSize || 1)));
+    size = s;
+    sizeInput.value = String(size);
+
+    // resize grid keeping existing cells
+    const old = grid;
+    grid = Array.from({ length: size }, (_, r) =>
+      Array.from({ length: size }, (_, c) => (old[r] && old[r][c] !== undefined) ? old[r][c] : "")
+    );
+
+    map.size = size;
+    renderAll();
+  }
+
+  function setCell(r, c) {
+    const current = grid[r][c];
+
+    if (mode === "select") {
+      selectedId = current || "";
+      renderAll();
+      return;
+    }
+
+    if (mode === "erase") {
+      if (!current) return;
+      grid[r][c] = "";
+      // remove from nodes if no longer used anywhere
+      const stillUsed = grid.some(row => row.includes(current));
+      if (!stillUsed) {
+        delete map.nodes[current];
+        // remove neighbor references to deleted node
+        for (const node of Object.values(map.nodes)) {
+          for (const dir of ["top","bottom","left","right"]) {
+            if (node.neighbors[dir] === current) node.neighbors[dir] = "";
+          }
+        }
+      }
+      if (selectedId === current) selectedId = "";
+      renderAll();
+      return;
+    }
+
+    // place mode
+    if (current) {
+      selectedId = current;
+      renderAll();
+      return;
+    }
+    const newId = `${prefix}${counter}`;
+    counter++;
+    counterInput.value = String(counter);
+    grid[r][c] = newId;
+
+    if (!map.nodes[newId]) {
+      map.nodes[newId] = {
+        name: newId,
+        stats: { foodPerRound: 0, menPerRound: 0 },
+        neighbors: emptyNeighbors()
+      };
+    }
+
+    selectedId = newId;
+    renderAll();
+  }
+
+  function autoNeighborsFromGrid() {
+    const at = (r,c) => (r>=0 && r<size && c>=0 && c<size) ? grid[r][c] : "";
+    for (let r=0; r<size; r++) {
+      for (let c=0; c<size; c++) {
+        const id = grid[r][c];
+        if (!id) continue;
+        if (!map.nodes[id]) {
+          map.nodes[id] = { name:id, stats:{foodPerRound:0, menPerRound:0}, neighbors: emptyNeighbors() };
+        }
+        map.nodes[id].neighbors = {
+          top: at(r-1,c) || "",
+          bottom: at(r+1,c) || "",
+          left: at(r,c-1) || "",
+          right: at(r,c+1) || ""
+        };
+      }
+    }
+    renderAll();
+  }
+
+  function clearAll() {
+    grid = makeGrid(size);
+    map = emptyMap(size);
+    selectedId = "";
+    counter = 1;
+    counterInput.value = "1";
+    renderAll();
+  }
+
+  function updateSelectedStats() {
+    if (!selectedId || !map.nodes[selectedId]) return;
+    map.nodes[selectedId].stats.foodPerRound = parseInt(foodInput.value || "0", 10);
+    map.nodes[selectedId].stats.menPerRound = parseInt(menInput.value || "0", 10);
+    renderAll();
+  }
+
+  function updateSelectedNeighbors() {
+    if (!selectedId || !map.nodes[selectedId]) return;
+    map.nodes[selectedId].neighbors.top = (nbTop.value || "").trim();
+    map.nodes[selectedId].neighbors.bottom = (nbBottom.value || "").trim();
+    map.nodes[selectedId].neighbors.left = (nbLeft.value || "").trim();
+    map.nodes[selectedId].neighbors.right = (nbRight.value || "").trim();
+    renderAll();
+  }
+
+  function renameSelected(newIdRaw) {
+    const newId = (newIdRaw || "").trim();
+    const oldId = selectedId;
+    if (!oldId || !newId || newId === oldId) return;
+    if (map.nodes[newId]) { alert("That ID already exists."); return; }
+    const node = map.nodes[oldId];
+    if (!node) return;
+
+    // nodes dict
+    delete map.nodes[oldId];
+    map.nodes[newId] = node;
+    map.nodes[newId].name = newId;
+
+    // neighbor references
+    for (const n of Object.values(map.nodes)) {
+      for (const dir of ["top","bottom","left","right"]) {
+        if (n.neighbors[dir] === oldId) n.neighbors[dir] = newId;
+      }
+    }
+
+    // grid cells
+    for (let r=0; r<size; r++) {
+      for (let c=0; c<size; c++) {
+        if (grid[r][c] === oldId) grid[r][c] = newId;
+      }
+    }
+
+    selectedId = newId;
+    renderAll();
+  }
+
+  function validateNeighbors() {
+    const errors = [];
+    const ids = new Set(Object.keys(map.nodes));
+    for (const [id, node] of Object.entries(map.nodes)) {
+      const nb = node.neighbors || emptyNeighbors();
+      for (const dir of ["top","bottom","left","right"]) {
+        const ref = (nb[dir] || "").trim();
+        if (!ref) continue;
+        if (ref === id) errors.push(`Node "${id}" has ${dir} pointing to itself ("${ref}").`);
+        if (!ids.has(ref)) errors.push(`Node "${id}" has ${dir} = "${ref}" but that node does not exist.`);
+      }
+    }
+    return errors;
+  }
+
+  function validateBidirectional() {
+    const errors = [];
+    const opposite = { top:"bottom", bottom:"top", left:"right", right:"left" };
+    for (const [id, node] of Object.entries(map.nodes)) {
+      for (const dir of ["top","bottom","left","right"]) {
+        const ref = node.neighbors[dir];
+        if (!ref) continue;
+        const other = map.nodes[ref];
+        if (!other) continue;
+        const back = other.neighbors[opposite[dir]];
+        if (back !== id) {
+          errors.push(`Bidirectional mismatch: "${id}".${dir} = "${ref}" but "${ref}".${opposite[dir]} = "${back}".`);
+        }
+      }
+    }
+    return errors;
+  }
+
+  function syncTextarea() {
+    ioArea.value = JSON.stringify(map, null, 2);
+  }
+
+  function copyJSON() {
+    const text = JSON.stringify(map, null, 2);
+    navigator.clipboard.writeText(text).then(
+      () => alert("Copied JSON to clipboard."),
+      () => alert("Could not copy (browser permissions). Use Download instead.")
+    );
+  }
+
+  function downloadJSON() {
+    const text = JSON.stringify(map, null, 2);
+    const blob = new Blob([text], { type: "application/json;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "GameMap.json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function importFromText(text) {
+    let parsed;
+    try { parsed = JSON.parse(text); }
+    catch (e) { alert("Import failed: invalid JSON."); return; }
+
+    if (!parsed || typeof parsed !== "object" || !parsed.nodes || typeof parsed.nodes !== "object") {
+      alert("Import failed: JSON must be an object with a 'nodes' object.");
+      return;
+    }
+
+    // Soft-coerce
+    const imported = { size: (typeof parsed.size === "number" ? parsed.size : size), nodes: {} };
+    for (const [id, n] of Object.entries(parsed.nodes)) {
+      if (!id) continue;
+      imported.nodes[id] = {
+        name: (typeof n?.name === "string" ? n.name : id),
+        stats: {
+          foodPerRound: (typeof n?.stats?.foodPerRound === "number" ? n.stats.foodPerRound : 0),
+          menPerRound: (typeof n?.stats?.menPerRound === "number" ? n.stats.menPerRound : 0)
+        },
+        neighbors: {
+          top: (typeof n?.neighbors?.top === "string" ? n.neighbors.top : ""),
+          bottom: (typeof n?.neighbors?.bottom === "string" ? n.neighbors.bottom : ""),
+          left: (typeof n?.neighbors?.left === "string" ? n.neighbors.left : ""),
+          right: (typeof n?.neighbors?.right === "string" ? n.neighbors.right : "")
+        }
+      };
+    }
+
+    map = imported;
+    applyResize(imported.size);
+    selectedId = Object.keys(imported.nodes)[0] || "";
+    renderAll();
+  }
+
+  // ===== Render =====
+  function renderGrid() {
+    gridEl.style.gridTemplateColumns = `repeat(${size}, minmax(46px, 1fr))`;
+    gridEl.innerHTML = "";
+    for (let r=0; r<size; r++) {
+      for (let c=0; c<size; c++) {
+        const id = grid[r][c];
+        const div = document.createElement("div");
+        div.className = "cell" + (id ? " filled" : "") + (id && id === selectedId ? " selected" : "");
+        div.textContent = id || "·";
+        div.title = id ? `Node ${id}` : "Empty";
+        div.addEventListener("click", () => setCell(r,c));
+        gridEl.appendChild(div);
+      }
+    }
+  }
+
+  function renderInspector() {
+    selectedLabel.textContent = selectedId || "—";
+    const node = selectedId ? map.nodes[selectedId] : null;
+
+    if (!node) {
+      inspectorEmpty.style.display = "block";
+      inspector.style.display = "none";
+      return;
+    }
+
+    inspectorEmpty.style.display = "none";
+    inspector.style.display = "block";
+
+    renameInput.value = selectedId;
+    foodInput.value = String(node.stats.foodPerRound ?? 0);
+    menInput.value = String(node.stats.menPerRound ?? 0);
+    nbTop.value = node.neighbors.top ?? "";
+    nbBottom.value = node.neighbors.bottom ?? "";
+    nbLeft.value = node.neighbors.left ?? "";
+    nbRight.value = node.neighbors.right ?? "";
+  }
+
+  function renderStatus() {
+    const nodeCount = Object.keys(map.nodes).length;
+    const issues = validateNeighbors().concat(enforceBidirectional ? validateBidirectional() : []);
+    const ok = issues.length === 0;
+
+    statusChips.innerHTML = "";
+    statusChips.appendChild(chip(`Size: ${size}×${size}`));
+    statusChips.appendChild(chip(`Nodes: ${nodeCount}`));
+    statusChips.appendChild(chip(ok ? "Valid" : "Issues", ok ? "ok" : "bad"));
+
+    if (!ok) {
+      issuesBox.style.display = "block";
+      issuesBox.innerHTML = `<h4>Map issues</h4><ul>${issues.slice(0,8).map(e => `<li>${escapeHtml(e)}</li>`).join("")}</ul>` +
+        (issues.length > 8 ? `<div class="muted" style="margin-top:6px;">…and ${issues.length - 8} more.</div>` : "");
+    } else {
+      issuesBox.style.display = "none";
+      issuesBox.innerHTML = "";
+    }
+  }
+
+  function chip(text, kind) {
+    const span = document.createElement("span");
+    span.className = "chip" + (kind ? ` ${kind}` : "");
+    span.textContent = text;
+    return span;
+  }
+
+  function escapeHtml(s) {
+    return String(s)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll("\"", "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function renderAll() {
+    // keep map.size synced
+    map.size = size;
+    renderGrid();
+    renderInspector();
+    renderStatus();
+    syncTextarea();
+  }
+
+  // Initial render
+  renderAll();
+</script>
+</body>
+</html>
