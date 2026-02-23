@@ -1,13 +1,12 @@
 import { Client, Room, Callbacks } from "@colyseus/sdk";
 import Phaser from "phaser";
 import { GameMap, GameRoomState } from "../server/src/rooms/schema/GameRoomState"
-import { GameMapJSON } from "../shared/src/MapCreation/MapTranslator.js";
 
 export class GameScene extends Phaser.Scene {
     preload() {
     }
 
-    client = new Client("http://localhost:2567");
+    client = new Client("ws://localhost:2567");
     room: Room<GameRoomState> | null = null;
 
     private nodeSprites = new Map<string, Phaser.GameObjects.Container>();
@@ -16,24 +15,14 @@ export class GameScene extends Phaser.Scene {
     async create() {
         console.log("Joining room...");
 
-        try {
-            this.room = await this.client.joinOrCreate("my_room");
-            console.log("Joined successfully!");
-
-        } catch (e) {
-            console.error(e);
-        }
+        this.room = await this.client.joinOrCreate("my_room");
+        if (!this.room)
+            throw new Error("Failed to join room"); 
+        console.log("Joined successfully!");
 
         this.input.mouse?.disableContextMenu();
         this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
-            if (!this.room) return;
         });
-
-        const map: GameMap | undefined = this.room?.state?.map;
-        if(!map) 
-            throw new Error("Failed to load map from server room state!");
-
-        this.renderMap(map);
 
         this.cameras.main.setBounds(0, 0, 5000, 5000);
         this.input.on("wheel", (_p: any, _o: any, _dx: number, dy: number) => {
@@ -46,6 +35,27 @@ export class GameScene extends Phaser.Scene {
         const cam = this.cameras.main;
         cam.scrollX -= (p.x - p.prevPosition.x) / cam.zoom;
         cam.scrollY -= (p.y - p.prevPosition.y) / cam.zoom;
+        });
+
+        this.room.onStateChange.once((state) =>
+        {
+            const map: GameMap = state.map;
+            this.renderMap(map);
+        })
+
+        // Optional: camera controls
+        this.cameras.main.setBounds(0, 0, 5000, 5000);
+        this.input.on("wheel", (_p: any, _o: any, _dx: number, dy: number) => {
+            const cam = this.cameras.main;
+            cam.zoom = Phaser.Math.Clamp(cam.zoom - dy * 0.001, 0.2, 2.5);
+        });
+
+        // Drag to pan
+        this.input.on("pointermove", (p: Phaser.Input.Pointer) => {
+            if (!p.isDown) return;
+            const cam = this.cameras.main;
+            cam.scrollX -= (p.x - p.prevPosition.x) / cam.zoom;
+            cam.scrollY -= (p.y - p.prevPosition.y) / cam.zoom;
         });
     }
 
@@ -92,40 +102,7 @@ export class GameScene extends Phaser.Scene {
             this.nodeSprites.set(id, container);
         }
 
-        // 2) Draw edges (only right/bottom to avoid duplicates since map is bidirectional)
-        this.edges.lineStyle(3, 0x888888, 0.9);
-
-        for (const [id, node] of Object.entries(map.nodes)) {
-            const a = this.nodeSprites.get(id);
-            if (!a) continue;
-
-            const right = node.neighbors.right;
-            const bottom = node.neighbors.bottom;
-
-            if (right && this.nodeSprites.has(right)) {
-                const b = this.nodeSprites.get(right)!;
-                this.edges.strokeLineShape(new Phaser.Geom.Line(a.x, a.y, b.x, b.y));
-            }
-            if (bottom && this.nodeSprites.has(bottom)) {
-                const b = this.nodeSprites.get(bottom)!;
-                this.edges.strokeLineShape(new Phaser.Geom.Line(a.x, a.y, b.x, b.y));
-            }
-        }
-
-        // Optional: camera controls
-        this.cameras.main.setBounds(0, 0, 5000, 5000);
-        this.input.on("wheel", (_p: any, _o: any, _dx: number, dy: number) => {
-            const cam = this.cameras.main;
-            cam.zoom = Phaser.Math.Clamp(cam.zoom - dy * 0.001, 0.2, 2.5);
-        });
-
-        // Drag to pan
-        this.input.on("pointermove", (p: Phaser.Input.Pointer) => {
-            if (!p.isDown) return;
-            const cam = this.cameras.main;
-            cam.scrollX -= (p.x - p.prevPosition.x) / cam.zoom;
-            cam.scrollY -= (p.y - p.prevPosition.y) / cam.zoom;
-        });
+        console.log("Map drawn!");
     }
 }
 
@@ -151,7 +128,7 @@ const config: Phaser.Types.Core.GameConfig = {
     type: Phaser.AUTO,
     width: 800,
     height: 600,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#898989',
     parent: 'game',
     pixelArt: true,
     scene: [GameScene],
