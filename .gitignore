@@ -16,7 +16,7 @@ logs/
 node_modules/
 parcel-bundle-reports/
 tmp
-
+*.env*
 /target/
 
 .pnp.*

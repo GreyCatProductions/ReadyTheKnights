@@ -1,4 +1,4 @@
-import { GameMapJSON } from "../../MapCreation/MapTranslator.js";
+import { GameMapJSON } from "../../../../shared/src/MapCreation/MapTranslator.js";
 import { GameMap, GameNode } from "../schema/GameRoomState.js";
 
 export function createMap(gameMap: GameMap, mapJson: GameMapJSON) {

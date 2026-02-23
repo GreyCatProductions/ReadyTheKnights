@@ -30,7 +30,6 @@ export class GameMap extends Schema
 
 export class GameRoomState extends Schema {
 
-  @type("number") counter: number = 0;
   @type({ map: Player }) players = new MapSchema<Player>();
   @type(GameMap) map = new GameMap();
 }
