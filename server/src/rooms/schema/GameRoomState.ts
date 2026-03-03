@@ -9,18 +9,12 @@ export class NodeStats extends Schema
   @type("number") menPerRound: number = 0;
 }
 
-export class Neighbors extends Schema {
-  @type("string") top: string = "";
-  @type("string") bottom: string = "";
-  @type("string") left: string = "";
-  @type("string") right: string = "";
-}
-
 export class GameNode extends Schema
 {
   @type("string") name: string = "Node";
   @type(NodeStats) stats: NodeStats = new NodeStats();
-  @type(Neighbors) neighbors: Neighbors = new Neighbors();
+  @type("number") row: number = -1;
+  @type("number") column: number = -1;
 }
 
 export class GameMap extends Schema
