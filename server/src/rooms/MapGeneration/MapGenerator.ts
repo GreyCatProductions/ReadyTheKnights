@@ -9,13 +9,11 @@ export function createMap(gameMap: GameMap, mapJson: GameMapJSON) {
     for (const [id, nodeJson] of Object.entries(mapJson.nodes)) {
         const node = new GameNode();
         node.name = nodeJson.name ?? id;
+        node.row = nodeJson.row;
+        node.column = nodeJson.column;
 
         node.stats.foodPerRound = nodeJson.stats?.foodPerRound ?? 0;
         node.stats.menPerRound = nodeJson.stats?.menPerRound ?? 0;
-        node.neighbors.top = nodeJson.neighbors?.top ?? "";
-        node.neighbors.bottom = nodeJson.neighbors?.bottom ?? "";
-        node.neighbors.left = nodeJson.neighbors?.left ?? "";
-        node.neighbors.right = nodeJson.neighbors?.right ?? "";
 
         gameMap.nodes.set(id, node);
     }

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>GameMap JSON Editor (Bidirectional)</title>
+  <title>GameMap Editor</title>
   <style>
     :root {
       --bg: #0b0f19;
@@ -146,6 +146,20 @@
     .issues ul { margin: 0; padding-left: 18px; color: rgba(255,255,255,.85); }
     .muted { color: var(--muted); font-size: 12px; }
     .sep { height: 1px; background: var(--border); margin: 12px 0; }
+
+    .info-row {
+      display: flex;
+      gap: 12px;
+    }
+    .info-box {
+      flex: 1;
+      padding: 8px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(0,0,0,.20);
+    }
+    .info-box .info-label { font-size: 11px; color: var(--muted); margin-bottom: 2px; }
+    .info-box .info-val { font-size: 18px; font-weight: 700; color: var(--accent); }
   </style>
 </head>
 <body>
@@ -153,15 +167,15 @@
   <div class="grid2">
     <div class="card">
       <div class="head">
-        <h2>GameMap Editor (Bidirectional enforced)</h2>
+        <h2>GameMap Editor</h2>
         <div class="sub">
-          Every neighbor link is kept consistent: if A.right=B then B.left=A (always).
+          Place nodes on the grid. Each cell's position becomes the node's <code>row</code> and <code>column</code> in the exported JSON.
         </div>
       </div>
       <div class="body">
         <div class="row">
           <div class="field small">
-            <label>Size</label>
+            <label>Grid size</label>
             <input id="sizeInput" type="number" min="1" max="30" value="6" />
           </div>
           <div class="field small">
@@ -181,7 +195,6 @@
                 <button data-mode="select">Select</button>
                 <button data-mode="erase">Erase</button>
               </div>
-              <button class="btn secondary" id="autoBtn">Auto-neighbors</button>
               <button class="btn danger" id="clearBtn">Clear</button>
             </div>
           </div>
@@ -204,12 +217,11 @@
     <div class="card">
       <div class="head">
         <h3>Inspector</h3>
-        <div class="sub">Editing a neighbor automatically updates the opposite side.</div>
+        <div class="sub">Grid position is the node's row/column. Move a node by erasing and re-placing it.</div>
       </div>
       <div class="body">
         <div class="chips">
           <span class="chip">Selected: <strong id="selectedLabel">—</strong></span>
-          <span class="chip">Rule: <strong>Bidirectional</strong></span>
         </div>
 
         <div class="sep"></div>
@@ -217,6 +229,19 @@
         <div id="inspectorEmpty" class="muted">Select a node (click it in Place mode or use Select mode).</div>
 
         <div id="inspector" style="display:none;">
+          <div class="info-row">
+            <div class="info-box">
+              <div class="info-label">row</div>
+              <div class="info-val" id="infoRow">—</div>
+            </div>
+            <div class="info-box">
+              <div class="info-label">column</div>
+              <div class="info-val" id="infoCol">—</div>
+            </div>
+          </div>
+
+          <div class="sep"></div>
+
           <div class="row">
             <div class="field grow">
               <label>Rename node ID</label>
@@ -226,7 +251,7 @@
               <button class="btn secondary" id="renameBtn" style="margin-top:18px;">Rename</button>
             </div>
           </div>
-          <div class="muted" style="margin-top:6px;">Renaming updates grid + all neighbor references.</div>
+          <div class="muted" style="margin-top:6px;">Renaming updates the grid and the exported JSON key.</div>
 
           <div class="sep"></div>
 
@@ -244,33 +269,6 @@
           <div class="sep"></div>
 
           <div class="row">
-            <div class="field grow">
-              <label>top</label>
-              <input id="nbTop" type="text" />
-            </div>
-            <div class="field grow">
-              <label>bottom</label>
-              <input id="nbBottom" type="text" />
-            </div>
-          </div>
-          <div class="row" style="margin-top:10px;">
-            <div class="field grow">
-              <label>left</label>
-              <input id="nbLeft" type="text" />
-            </div>
-            <div class="field grow">
-              <label>right</label>
-              <input id="nbRight" type="text" />
-            </div>
-          </div>
-
-          <div class="muted" style="margin-top:8px;">
-            Empty string means “no neighbor”. If you set a neighbor, the opposite side is auto-set too.
-          </div>
-
-          <div class="sep"></div>
-
-          <div class="row">
             <button class="btn primary" id="copyBtn">Copy JSON</button>
             <button class="btn secondary" id="downloadBtn">Download JSON</button>
           </div>
@@ -281,16 +279,13 @@
     <div class="card" style="grid-column: 1 / -1;">
       <div class="head">
         <h3>Import / Export (raw JSON)</h3>
-        <div class="sub">Paste JSON here to import. Export stays in sync.</div>
+        <div class="sub">Paste a GameMap JSON here to import. Export stays in sync with the grid.</div>
       </div>
       <div class="body">
         <textarea id="ioArea"></textarea>
         <div class="row" style="margin-top:10px;">
           <button class="btn secondary" id="importBtn">Import JSON</button>
           <button class="btn secondary" id="resetTextBtn">Reset textbox to current</button>
-        </div>
-        <div class="muted" style="margin-top:8px;">
-          Import is forgiving, but after import the editor will enforce bidirectional edits from then on.
         </div>
       </div>
     </div>
@@ -307,34 +302,32 @@
   let counter = 1;
   let selectedId = "";
 
-  let map = emptyMap(size);
+  // nodes stores only name + stats. row/column are always derived from grid position.
+  let nodes = {};  // { [id]: { name, stats: { foodPerRound, menPerRound } } }
 
   // ===== DOM refs =====
-  const gridEl = document.getElementById("grid");
-  const sizeInput = document.getElementById("sizeInput");
+  const gridEl      = document.getElementById("grid");
+  const sizeInput   = document.getElementById("sizeInput");
   const prefixInput = document.getElementById("prefixInput");
-  const counterInput = document.getElementById("counterInput");
+  const counterInput= document.getElementById("counterInput");
   const modeButtons = document.getElementById("modeButtons");
 
-  const statusChips = document.getElementById("statusChips");
-  const issuesBox = document.getElementById("issuesBox");
+  const statusChips   = document.getElementById("statusChips");
+  const issuesBox     = document.getElementById("issuesBox");
 
-  const selectedLabel = document.getElementById("selectedLabel");
+  const selectedLabel  = document.getElementById("selectedLabel");
   const inspectorEmpty = document.getElementById("inspectorEmpty");
-  const inspector = document.getElementById("inspector");
+  const inspector      = document.getElementById("inspector");
 
-  const renameInput = document.getElementById("renameInput");
-  const foodInput = document.getElementById("foodInput");
-  const menInput = document.getElementById("menInput");
-  const nbTop = document.getElementById("nbTop");
-  const nbBottom = document.getElementById("nbBottom");
-  const nbLeft = document.getElementById("nbLeft");
-  const nbRight = document.getElementById("nbRight");
+  const infoRow    = document.getElementById("infoRow");
+  const infoCol    = document.getElementById("infoCol");
+  const renameInput= document.getElementById("renameInput");
+  const foodInput  = document.getElementById("foodInput");
+  const menInput   = document.getElementById("menInput");
 
   const ioArea = document.getElementById("ioArea");
 
-  // Buttons
-  document.getElementById("autoBtn").addEventListener("click", autoNeighborsFromGrid);
+  // ===== Buttons =====
   document.getElementById("clearBtn").addEventListener("click", clearAll);
   document.getElementById("renameBtn").addEventListener("click", () => renameSelected(renameInput.value));
   document.getElementById("copyBtn").addEventListener("click", copyJSON);
@@ -342,12 +335,10 @@
   document.getElementById("importBtn").addEventListener("click", () => importFromText(ioArea.value));
   document.getElementById("resetTextBtn").addEventListener("click", syncTextarea);
 
-  // Inputs
   sizeInput.addEventListener("change", () => applyResize(parseInt(sizeInput.value || "1", 10)));
   prefixInput.addEventListener("input", () => { prefix = (prefixInput.value || "A").replace(/\s+/g, "").slice(0, 6); });
   counterInput.addEventListener("change", () => { counter = Math.max(1, parseInt(counterInput.value || "1", 10)); });
 
-  // Mode switch
   modeButtons.addEventListener("click", (e) => {
     const btn = e.target.closest("button[data-mode]");
     if (!btn) return;
@@ -355,29 +346,46 @@
     [...modeButtons.querySelectorAll("button")].forEach(b => b.classList.toggle("active", b.dataset.mode === mode));
   });
 
-  // Inspector change handlers
   foodInput.addEventListener("change", updateSelectedStats);
   menInput.addEventListener("change", updateSelectedStats);
-  nbTop.addEventListener("input", updateSelectedNeighbors);
-  nbBottom.addEventListener("input", updateSelectedNeighbors);
-  nbLeft.addEventListener("input", updateSelectedNeighbors);
-  nbRight.addEventListener("input", updateSelectedNeighbors);
 
   // ===== Helpers =====
   function makeGrid(s) {
     return Array.from({ length: s }, () => Array.from({ length: s }, () => ""));
   }
-  function emptyNeighbors() { return { top:"", bottom:"", left:"", right:"" }; }
-  function emptyMap(s) { return { size: s, nodes: {} }; }
 
   function ensureNode(id) {
-    if (!map.nodes[id]) {
-      map.nodes[id] = {
-        name: id,
-        stats: { foodPerRound: 0, menPerRound: 0 },
-        neighbors: emptyNeighbors()
-      };
+    if (!nodes[id]) {
+      nodes[id] = { name: id, stats: { foodPerRound: 0, menPerRound: 0 } };
     }
+  }
+
+  function getNodePosition(id) {
+    for (let r = 0; r < size; r++)
+      for (let c = 0; c < size; c++)
+        if (grid[r][c] === id) return { row: r, column: c };
+    return null;
+  }
+
+  function buildExportMap() {
+    const exportNodes = {};
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        const id = grid[r][c];
+        if (!id) continue;
+        const node = nodes[id] || {};
+        exportNodes[id] = {
+          name: node.name ?? id,
+          row: r,
+          column: c,
+          stats: {
+            foodPerRound: node.stats?.foodPerRound ?? 0,
+            menPerRound:  node.stats?.menPerRound  ?? 0
+          }
+        };
+      }
+    }
+    return { size, nodes: exportNodes };
   }
 
   function applyResize(newSize) {
@@ -390,7 +398,11 @@
       Array.from({ length: size }, (_, c) => (old[r] && old[r][c] !== undefined) ? old[r][c] : "")
     );
 
-    map.size = size;
+    // Remove nodes that fell outside the new size
+    for (const id of Object.keys(nodes)) {
+      if (!grid.some(row => row.includes(id))) delete nodes[id];
+    }
+
     renderAll();
   }
 
@@ -406,23 +418,13 @@
     if (mode === "erase") {
       if (!current) return;
       grid[r][c] = "";
-
-      const stillUsed = grid.some(row => row.includes(current));
-      if (!stillUsed) {
-        // Remove the node and clean neighbor references
-        delete map.nodes[current];
-        for (const node of Object.values(map.nodes)) {
-          for (const dir of ["top","bottom","left","right"]) {
-            if (node.neighbors[dir] === current) node.neighbors[dir] = "";
-          }
-        }
-      }
+      if (!grid.some(row => row.includes(current))) delete nodes[current];
       if (selectedId === current) selectedId = "";
       renderAll();
       return;
     }
 
-    // place mode
+    // place mode — clicking a filled cell selects it
     if (current) {
       selectedId = current;
       renderAll();
@@ -440,27 +442,9 @@
     renderAll();
   }
 
-  function autoNeighborsFromGrid() {
-    const at = (r,c) => (r>=0 && r<size && c>=0 && c<size) ? grid[r][c] : "";
-    for (let r=0; r<size; r++) {
-      for (let c=0; c<size; c++) {
-        const id = grid[r][c];
-        if (!id) continue;
-        ensureNode(id);
-        map.nodes[id].neighbors = {
-          top: at(r-1,c) || "",
-          bottom: at(r+1,c) || "",
-          left: at(r,c-1) || "",
-          right: at(r,c+1) || ""
-        };
-      }
-    }
-    renderAll();
-  }
-
   function clearAll() {
     grid = makeGrid(size);
-    map = emptyMap(size);
+    nodes = {};
     selectedId = "";
     counter = 1;
     counterInput.value = "1";
@@ -468,125 +452,40 @@
   }
 
   function updateSelectedStats() {
-    if (!selectedId || !map.nodes[selectedId]) return;
-    map.nodes[selectedId].stats.foodPerRound = parseInt(foodInput.value || "0", 10);
-    map.nodes[selectedId].stats.menPerRound = parseInt(menInput.value || "0", 10);
-    renderAll();
-  }
-
-  // ===== Bidirectional enforcement (core) =====
-  const opposite = { top:"bottom", bottom:"top", left:"right", right:"left" };
-
-  function setNeighborBidirectional(aId, dir, bIdRaw) {
-    ensureNode(aId);
-
-    const bId = (bIdRaw || "").trim();
-    const aNode = map.nodes[aId];
-
-    // Clear old opposite link if needed
-    const prev = (aNode.neighbors[dir] || "").trim();
-    if (prev && map.nodes[prev]) {
-      const prevNode = map.nodes[prev];
-      const backDir = opposite[dir];
-      if (prevNode.neighbors[backDir] === aId) {
-        prevNode.neighbors[backDir] = "";
-      }
-    }
-
-    // Set new link A.dir = B (or empty)
-    aNode.neighbors[dir] = bId;
-
-    // If empty: done.
-    if (!bId) return;
-
-    // If points to non-existing node, create it (so bidirectional can be enforced)
-    ensureNode(bId);
-
-    // Enforce B.opposite(dir) = A
-    const bNode = map.nodes[bId];
-    bNode.neighbors[opposite[dir]] = aId;
-  }
-
-  function updateSelectedNeighbors() {
-    if (!selectedId) return;
-
-    // These enforce both sides immediately:
-    setNeighborBidirectional(selectedId, "top", nbTop.value);
-    setNeighborBidirectional(selectedId, "bottom", nbBottom.value);
-    setNeighborBidirectional(selectedId, "left", nbLeft.value);
-    setNeighborBidirectional(selectedId, "right", nbRight.value);
-
-    renderAll();
+    if (!selectedId || !nodes[selectedId]) return;
+    nodes[selectedId].stats.foodPerRound = parseInt(foodInput.value || "0", 10);
+    nodes[selectedId].stats.menPerRound  = parseInt(menInput.value  || "0", 10);
+    syncTextarea();
   }
 
   function renameSelected(newIdRaw) {
     const newId = (newIdRaw || "").trim();
     const oldId = selectedId;
     if (!oldId || !newId || newId === oldId) return;
-    if (map.nodes[newId]) { alert("That ID already exists."); return; }
+    if (nodes[newId]) { alert("That ID already exists."); return; }
 
-    const node = map.nodes[oldId];
+    const node = nodes[oldId];
     if (!node) return;
 
-    delete map.nodes[oldId];
-    map.nodes[newId] = node;
-    map.nodes[newId].name = newId;
+    delete nodes[oldId];
+    nodes[newId] = node;
+    nodes[newId].name = newId;
 
-    // Update all references
-    for (const n of Object.values(map.nodes)) {
-      for (const dir of ["top","bottom","left","right"]) {
-        if (n.neighbors[dir] === oldId) n.neighbors[dir] = newId;
-      }
-    }
-
-    // Update grid
-    for (let r=0; r<size; r++) {
-      for (let c=0; c<size; c++) {
+    for (let r = 0; r < size; r++)
+      for (let c = 0; c < size; c++)
         if (grid[r][c] === oldId) grid[r][c] = newId;
-      }
-    }
 
     selectedId = newId;
     renderAll();
   }
 
-  // ===== Validation =====
-  function validateNeighborsExist() {
-    const errors = [];
-    const ids = new Set(Object.keys(map.nodes));
-    for (const [id, node] of Object.entries(map.nodes)) {
-      const nb = node.neighbors || emptyNeighbors();
-      for (const dir of ["top","bottom","left","right"]) {
-        const ref = (nb[dir] || "").trim();
-        if (!ref) continue;
-        if (ref === id) errors.push(`Node "${id}" has ${dir} pointing to itself ("${ref}").`);
-        if (!ids.has(ref)) errors.push(`Node "${id}" has ${dir} = "${ref}" but that node does not exist.`);
-      }
-    }
-    return errors;
+  // ===== Import / Export =====
+  function syncTextarea() {
+    ioArea.value = JSON.stringify(buildExportMap(), null, 2);
   }
-
-  function validateBidirectional() {
-    const errors = [];
-    for (const [id, node] of Object.entries(map.nodes)) {
-      for (const dir of ["top","bottom","left","right"]) {
-        const ref = (node.neighbors[dir] || "").trim();
-        if (!ref) continue;
-        const other = map.nodes[ref];
-        if (!other) continue;
-        const back = (other.neighbors[opposite[dir]] || "").trim();
-        if (back !== id) {
-          errors.push(`Bidirectional mismatch: "${id}".${dir} = "${ref}" but "${ref}".${opposite[dir]} = "${back}".`);
-        }
-      }
-    }
-    return errors;
-  }
-
-  function syncTextarea() { ioArea.value = JSON.stringify(map, null, 2); }
 
   function copyJSON() {
-    const text = JSON.stringify(map, null, 2);
+    const text = JSON.stringify(buildExportMap(), null, 2);
     navigator.clipboard.writeText(text).then(
       () => alert("Copied JSON to clipboard."),
       () => alert("Could not copy (browser permissions). Use Download instead.")
@@ -594,15 +493,12 @@
   }
 
   function downloadJSON() {
-    const text = JSON.stringify(map, null, 2);
+    const text = JSON.stringify(buildExportMap(), null, 2);
     const blob = new Blob([text], { type: "application/json;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "GameMap.json";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href = url; a.download = "GameMap.json";
+    document.body.appendChild(a); a.click(); a.remove();
     URL.revokeObjectURL(url);
   }
 
@@ -616,61 +512,54 @@
       return;
     }
 
-    // Soft-coerce
-    const imported = { size: (typeof parsed.size === "number" ? parsed.size : size), nodes: {} };
+    // Determine required grid size from row/column values
+    let maxRow = 0, maxCol = 0;
+    for (const n of Object.values(parsed.nodes)) {
+      if (typeof n?.row    === "number") maxRow = Math.max(maxRow, n.row);
+      if (typeof n?.column === "number") maxCol = Math.max(maxCol, n.column);
+    }
+    const importedSize = Math.max(parsed.size ?? 0, maxRow + 1, maxCol + 1, 1);
+
+    size = importedSize;
+    sizeInput.value = String(size);
+    grid  = makeGrid(size);
+    nodes = {};
+
     for (const [id, n] of Object.entries(parsed.nodes)) {
       if (!id) continue;
-      imported.nodes[id] = {
-        name: (typeof n?.name === "string" ? n.name : id),
+      const r = typeof n?.row    === "number" ? n.row    : -1;
+      const c = typeof n?.column === "number" ? n.column : -1;
+      if (r < 0 || c < 0 || r >= size || c >= size) continue;
+
+      grid[r][c] = id;
+      nodes[id]  = {
+        name: typeof n?.name === "string" ? n.name : id,
         stats: {
-          foodPerRound: (typeof n?.stats?.foodPerRound === "number" ? n.stats.foodPerRound : 0),
-          menPerRound: (typeof n?.stats?.menPerRound === "number" ? n.stats.menPerRound : 0)
-        },
-        neighbors: {
-          top: (typeof n?.neighbors?.top === "string" ? n.neighbors.top : ""),
-          bottom: (typeof n?.neighbors?.bottom === "string" ? n.neighbors.bottom : ""),
-          left: (typeof n?.neighbors?.left === "string" ? n.neighbors.left : ""),
-          right: (typeof n?.neighbors?.right === "string" ? n.neighbors.right : "")
+          foodPerRound: typeof n?.stats?.foodPerRound === "number" ? n.stats.foodPerRound : 0,
+          menPerRound:  typeof n?.stats?.menPerRound  === "number" ? n.stats.menPerRound  : 0
         }
       };
     }
 
-    map = imported;
-    applyResize(imported.size);
-    selectedId = Object.keys(imported.nodes)[0] || "";
-
-    // Optional: you can “repair” imported maps by enforcing bidirectional for existing links.
-    // This keeps your rule true after import.
-    repairBidirectional();
+    counter    = Object.keys(nodes).length + 1;
+    counterInput.value = String(counter);
+    selectedId = Object.keys(nodes)[0] || "";
 
     renderAll();
-  }
-
-  function repairBidirectional() {
-    // For every A.dir=B, set B.opposite=A (creates missing nodes).
-    for (const [aId, node] of Object.entries(map.nodes)) {
-      for (const dir of ["top","bottom","left","right"]) {
-        const bId = (node.neighbors[dir] || "").trim();
-        if (!bId) continue;
-        ensureNode(aId);
-        ensureNode(bId);
-        map.nodes[bId].neighbors[opposite[dir]] = aId;
-      }
-    }
   }
 
   // ===== Render =====
   function renderGrid() {
     gridEl.style.gridTemplateColumns = `repeat(${size}, minmax(46px, 1fr))`;
     gridEl.innerHTML = "";
-    for (let r=0; r<size; r++) {
-      for (let c=0; c<size; c++) {
-        const id = grid[r][c];
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        const id  = grid[r][c];
         const div = document.createElement("div");
         div.className = "cell" + (id ? " filled" : "") + (id && id === selectedId ? " selected" : "");
         div.textContent = id || "·";
-        div.title = id ? `Node ${id}` : "Empty";
-        div.addEventListener("click", () => setCell(r,c));
+        div.title = id ? `${id}  (row ${r}, col ${c})` : `row ${r}, col ${c}`;
+        div.addEventListener("click", () => setCell(r, c));
         gridEl.appendChild(div);
       }
     }
@@ -678,47 +567,32 @@
 
   function renderInspector() {
     selectedLabel.textContent = selectedId || "—";
-    const node = selectedId ? map.nodes[selectedId] : null;
+    const node = selectedId ? nodes[selectedId] : null;
 
     if (!node) {
       inspectorEmpty.style.display = "block";
-      inspector.style.display = "none";
+      inspector.style.display      = "none";
       return;
     }
 
     inspectorEmpty.style.display = "none";
-    inspector.style.display = "block";
+    inspector.style.display      = "block";
+
+    const pos = getNodePosition(selectedId);
+    infoRow.textContent = pos ? String(pos.row)    : "?";
+    infoCol.textContent = pos ? String(pos.column) : "?";
 
     renameInput.value = selectedId;
-    foodInput.value = String(node.stats.foodPerRound ?? 0);
-    menInput.value = String(node.stats.menPerRound ?? 0);
-    nbTop.value = node.neighbors.top ?? "";
-    nbBottom.value = node.neighbors.bottom ?? "";
-    nbLeft.value = node.neighbors.left ?? "";
-    nbRight.value = node.neighbors.right ?? "";
+    foodInput.value   = String(node.stats.foodPerRound ?? 0);
+    menInput.value    = String(node.stats.menPerRound  ?? 0);
   }
 
   function renderStatus() {
-    const nodeCount = Object.keys(map.nodes).length;
-
-    // Always validate both:
-    const issues = validateNeighborsExist().concat(validateBidirectional());
-    const ok = issues.length === 0;
-
+    const nodeCount = Object.keys(nodes).length;
     statusChips.innerHTML = "";
     statusChips.appendChild(chip(`Size: ${size}×${size}`));
     statusChips.appendChild(chip(`Nodes: ${nodeCount}`));
-    statusChips.appendChild(chip(ok ? "Valid" : "Issues", ok ? "ok" : "bad"));
-
-    if (!ok) {
-      issuesBox.style.display = "block";
-      issuesBox.innerHTML =
-        `<h4>Map issues</h4><ul>${issues.slice(0,8).map(e => `<li>${escapeHtml(e)}</li>`).join("")}</ul>` +
-        (issues.length > 8 ? `<div class="muted" style="margin-top:6px;">…and ${issues.length - 8} more.</div>` : "");
-    } else {
-      issuesBox.style.display = "none";
-      issuesBox.innerHTML = "";
-    }
+    issuesBox.style.display = "none";
   }
 
   function chip(text, kind) {
@@ -728,17 +602,7 @@
     return span;
   }
 
-  function escapeHtml(s) {
-    return String(s)
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll("\"", "&quot;")
-      .replaceAll("'", "&#039;");
-  }
-
   function renderAll() {
-    map.size = size;
     renderGrid();
     renderInspector();
     renderStatus();

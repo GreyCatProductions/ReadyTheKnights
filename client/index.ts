@@ -51,19 +51,18 @@ export class GameScene extends Phaser.Scene {
         const cell = 128;
 
         // 1) Place nodes
-        for (const id of Object.keys(map.nodes)) {
-            const col = map.nodes.get(id)?.column;
-            const row = map.nodes.get(id)?.row;
+        map.nodes.forEach((node) => {
+            const col = node.column;
+            const row = node.row;
 
-            if(!col || !row)
+            if(col === undefined || row === undefined)
                 throw new Error("Failed to render map. A node has undefined coordinates!");
 
-            const x = col * cell;
-            const y = row * cell;
+            const x = col * cell + cell / 2;
+            const y = row * cell + cell / 2;
 
-            const rectangle = this.add.rectangle(x, y, cell, cell, 0xff0000, 1);
-
-        }
+            this.add.rectangle(x, y, cell, cell, 0xff0000, 1);
+        });
 
         console.log("Map drawn!");
     }
