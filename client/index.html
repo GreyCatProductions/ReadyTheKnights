@@ -110,6 +110,34 @@
     .res-icon  { font-size: 16px; width: 20px; text-align: center; }
     .res-label { flex: 1; color: #aaa; }
     .res-value { font-weight: 700; min-width: 40px; text-align: right; }
+
+    #building-bar {
+        position: fixed;
+        bottom: 16px;
+        left: 16px;
+        display: flex;
+        gap: 8px;
+        z-index: 50;
+    }
+    .building-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        width: 72px;
+        padding: 8px 6px;
+        background: rgba(0,0,0,0.75);
+        border: 1px solid #555;
+        color: #eee;
+        font: 11px ui-sans-serif, sans-serif;
+        cursor: pointer;
+    }
+    .building-btn:hover {
+        background: rgba(46,106,177,0.85);
+        border-color: #4a8fd4;
+    }
+    .building-btn .b-icon { font-size: 28px; }
+    .building-btn .b-name { color: #aaa; text-transform: capitalize; }
 </style>
 <body>
 <div id="game"></div>
@@ -118,6 +146,7 @@
 <div id="state-panel"></div>
 <div id="context-menu"></div>
 <div id="resource-panel"></div>
+<div id="building-bar"></div>
 <script type="module" src="./index.ts"></script>
 </body>
 </html>

@@ -3,12 +3,11 @@ import { GameNode } from "../../server/src/rooms/schema/GameRoomState";
 const menu = document.getElementById("context-menu")!;
 
 const ITEMS: { label: string; action: (node: GameNode) => void }[] = [
-    { label: "Move here",   action: (node) => console.log("Move to", node.name) },
-    { label: "Send troops", action: (node) => console.log("Send troops to", node.name) },
+    { label: "Send workers here", action: (node) => console.log("Send troops to", node.name) },
     { label: "Inspect",     action: (node) => console.log("Inspect", node.name, node.stats) },
 ];
 
-export function showContextMenu(node: GameNode, screenX: number, screenY: number) {
+export function showContextMenu(node: GameNode, sessionId: string, screenX: number, screenY: number) {
     menu.innerHTML = `<div class="cm-title">${node.name}<button class="cm-close" onclick="this.closest('#context-menu').style.display='none'">✕</button></div>`;
 
     for (const item of ITEMS) {
@@ -19,6 +18,12 @@ export function showContextMenu(node: GameNode, screenX: number, screenY: number
             hideContextMenu();
         });
         menu.appendChild(btn);
+    }
+
+    if (node.owner === sessionId) {
+        const sep = document.createElement("div");
+        sep.className = "cm-separator";
+        menu.appendChild(sep);
     }
 
     menu.style.left    = `${screenX}px`;

@@ -1,9 +1,11 @@
 import { Room, Client, CloseCode } from "colyseus";
-import { GameRoomState, Player } from "./schema/GameRoomState.js";
+import { Building, GameRoomState, Player } from "./schema/GameRoomState.js";
 import MapTranslator from "../../../shared/src/MapCreation/MapTranslator.js";
 import path from "node:path";
 import { createMap } from "./MapGeneration/MapGenerator.js";
 const { loadMapJSON } = MapTranslator;
+
+const CELL_SIZE = 128
 
 export class GameRoom extends Room {
   maxClients = 4;
@@ -24,6 +26,18 @@ export class GameRoom extends Room {
     this.state.currentDay = 1;
     this.state.dayEndTimestamp = Date.now() + this.DAY_DURATION_MS;
     this.clock.setInterval(() => this.endDay(), this.DAY_DURATION_MS);
+
+    this.onMessage("build", (client, { nodeId, buildingType }: { nodeId: string; buildingType: string }) => {
+      const node = this.state.map.nodes.get(nodeId);
+      if (!node) return;
+      if (node.owner !== client.sessionId) return;
+
+      const building = new Building();
+      building.type = buildingType;
+      building.ownerId = client.sessionId;
+      node.buildings.set(buildingType, building);
+      console.log(`${client.sessionId} built ${buildingType} on ${node.name}`);
+    });
   }
 
   private endDay() {
@@ -42,6 +56,12 @@ export class GameRoom extends Room {
     if (freeSpawns.length > 0) {
       const spawnNode = freeSpawns[Math.floor(Math.random() * freeSpawns.length)];
       spawnNode.owner = client.sessionId;
+      const base = new Building();
+      base.type = "base";
+      base.ownerId = client.sessionId;
+      base.posX = CELL_SIZE / 2;
+      base.posY = CELL_SIZE / 2;
+      spawnNode.buildings.set("base", base);
     } else {
       console.warn(`No free spawn tile for ${client.sessionId}`);
     }

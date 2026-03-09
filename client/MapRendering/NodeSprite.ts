@@ -1,23 +1,24 @@
-import { Container, Graphics, Rectangle, Text } from "pixi.js";
-import { GameNode, NodeStats } from "../../server/src/rooms/schema/GameRoomState";
-import { CELL_SIZE } from "../index";
+import { Container, Graphics, Rectangle, Sprite, Text, Texture } from "pixi.js";
+import { Building, GameNode, NodeStats } from "../../server/src/rooms/schema/GameRoomState";
+import { MapSchema } from "@colyseus/schema";
 import { showContextMenu } from "../UI/ContextMenu";
+import { NODE_RESOURCES } from "../UI/SpriteKeyMap";
+import { CELL_SIZE } from "..";
+
 
 const X_PADDING = 8;
 const Y_PADDING = -8;
 const ROW_HEIGHT = 16;
 
-const NODE_RESOURCES: { key: keyof NodeStats; icon: string }[] = [
-    { key: "foodPerRound", icon: "🍎" },
-    { key: "menPerRound", icon: "⚔️" },
-    { key: "woodPerRound", icon: "🪵"},
-];
-
 export class NodeSprite extends Container {
 
     private bg: Graphics;
+    private buildingLayer: Container;
 
-    constructor(node: GameNode) {
+    constructor(
+        node: GameNode,
+        sessionId: string,
+    ) {
         super();
 
         this.x = node.column * CELL_SIZE;
@@ -27,8 +28,10 @@ export class NodeSprite extends Container {
 
         this.on('pointerdown', (e) => {
             e.stopPropagation();
-            if (e.button === 0) this.onLeftClick(node);
-            if (e.button === 2) this.onRightClick(node, e.clientX, e.clientY);
+            if(e.button === 2)
+            {
+                showContextMenu(node, sessionId, e.x, e.y);
+            }
         });
 
         this.bg = new Graphics();
@@ -45,7 +48,10 @@ export class NodeSprite extends Container {
         label.x = CELL_SIZE / 2;
         label.y = CELL_SIZE / 2;
 
+        this.buildingLayer = new Container();
+
         this.addChild(this.bg);
+        this.addChild(this.buildingLayer);
         this.addChild(rect);
         this.addChild(label);
 
@@ -65,16 +71,21 @@ export class NodeSprite extends Container {
         });
     }
 
+    updateBuildings(buildings: MapSchema<Building>) {
+        this.buildingLayer.removeChildren();
+        let i = 0;
+        buildings.forEach((building) => {
+            const t = new Sprite(Texture.from(building.type));
+            t.x = building.posX;
+            t.y = building.posY;
+            t.anchor = 0.5;
+            this.buildingLayer.addChild(t);
+            i++;
+        });
+    }
+
     setBackground(color: number) {
         this.bg.clear();
         this.bg.rect(0, 0, CELL_SIZE, CELL_SIZE).fill(color);
-    }
-
-    onLeftClick(node: GameNode) {
-        console.log('Left click:', node.name);
-    }
-
-    onRightClick(node: GameNode, screenX: number, screenY: number) {
-        showContextMenu(node, screenX, screenY);
     }
 }

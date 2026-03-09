@@ -1,11 +1,12 @@
 import { Client, Room } from "@colyseus/sdk";
-import { Application, Container, Text } from "pixi.js";
+import { Assets, Application, Container, Text } from "pixi.js";
 import { GameMap, GameNode, GameRoomState } from "../server/src/rooms/schema/GameRoomState";
 import { NodeSprite } from "./MapRendering/NodeSprite";
 import { updateResourcePanel } from "./UI/ResourcePanel";
-import { MapSchema } from "@colyseus/schema";
+import { Callbacks } from "@colyseus/schema";
 
-export const CELL_SIZE = 128;
+export const CELL_SIZE = 128
+
 const MARGIN = 256;
 
 const client = new Client("ws://localhost:2567");
@@ -46,8 +47,11 @@ const nodeSprites = new Map<string, NodeSprite>();
         lastY = e.clientY;
         clampWorld(world);
     });
-    app.canvas.addEventListener("pointerup",    (e: PointerEvent) => { if (e.button !== 0) return; isPanning = false; });
+    app.canvas.addEventListener("pointerup", (e: PointerEvent) => { if (e.button !== 0) return; isPanning = false; });
     app.canvas.addEventListener("pointerleave", () => { isPanning = false; });
+
+    Assets.add({ alias: 'base', src: 'sprites/buildings/base.png' });
+    await Assets.load('base');
 
     console.log("Joining room...");
     room = await client.joinOrCreate("my_room");
@@ -55,21 +59,27 @@ const nodeSprites = new Map<string, NodeSprite>();
 
     room.onStateChange.once((state) => {
         renderMap(state.map, world);
-        colorNodes(state.map.nodes);
+
+        const callbacks = Callbacks.get(room!);
+
+        callbacks.onAdd(state.map, "nodes", (node, id) => {
+            refreshNode(id, node);
+            callbacks.onChange(node, () => refreshNode(id, node));
+            callbacks.onAdd(node, "buildings", () => refreshNode(id, node));
+            callbacks.onRemove(node, "buildings", () => refreshNode(id, node));
+        });
     });
 
-    const timerEl    = document.getElementById("timer")!;
-    const dayEl      = document.getElementById("day")!;
+    const timerEl = document.getElementById("timer")!;
+    const dayEl = document.getElementById("day")!;
     const statePanel = document.getElementById("state-panel")!;
     let dayEndTimestamp = 0;
     let currentDay = 0;
 
     room.onStateChange((state) => {
         dayEndTimestamp = state.dayEndTimestamp;
-        currentDay      = state.currentDay;
+        currentDay = state.currentDay;
         dayEl.textContent = `Day ${currentDay}`;
-
-        colorNodes(state.map.nodes);
 
         const me = state.players.get(room!.sessionId);
         if (me) updateResourcePanel(me);
@@ -109,28 +119,28 @@ function renderMap(map: GameMap, world: Container) {
         minRow = Math.min(minRow, node.row);
         maxRow = Math.max(maxRow, node.row);
 
-        const sprite = new NodeSprite(node);
+        const sprite = new NodeSprite(node, id);
         nodeSprites.set(id, sprite);
         world.addChild(sprite);
     });
 
     mapBounds = {
-        left:   minCol * CELL_SIZE,
-        right:  (maxCol + 1) * CELL_SIZE,
-        top:    minRow * CELL_SIZE,
+        left: minCol * CELL_SIZE,
+        right: (maxCol + 1) * CELL_SIZE,
+        top: minRow * CELL_SIZE,
         bottom: (maxRow + 1) * CELL_SIZE,
     };
 
     console.log("Map drawn!");
 }
-function colorNodes(nodes: MapSchema<GameNode, string>) {
-    nodes.forEach((node, id) => {
-        const sprite = nodeSprites.get(id);
-        if (!sprite) return;
-        const color = node.owner === room!.sessionId ? 0x2255cc
-                    : node.owner !== ""              ? 0xcc2222
-                    :                                  0x555555;
-        sprite.setBackground(color);
-    });
+
+function refreshNode(id: string, node: GameNode) {
+    const sprite = nodeSprites.get(id);
+    if (!sprite) return;
+    const color = node.owner === room!.sessionId ? 0x2255cc
+        : node.owner !== "" ? 0xcc2222
+            : 0x555555;
+    sprite.setBackground(color);
+    sprite.updateBuildings(node.buildings);
 }
 

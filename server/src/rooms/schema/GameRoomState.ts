@@ -1,13 +1,7 @@
 import { MapSchema, Schema, type } from "@colyseus/schema";
 
-export class PlayerActions extends Schema //this will contain all actions player wants to do
-{
-
-}
-
 export class Player extends Schema
 {
-  @type(PlayerActions) playerActions = new PlayerActions();
   @type("number") manpower: number = 0;
   @type("number") wood: number = 0;
 }
@@ -19,6 +13,13 @@ export class NodeStats extends Schema
   @type("number") woodPerRound: number = 0;
 }
 
+export class Building extends Schema {
+  @type("string") type: string = "";
+  @type("string") ownerId: string = "";
+  @type("number") posX: number = -1;
+  @type("number") posY: number = -1;
+}
+
 export class GameNode extends Schema
 {
   @type("string") name: string = "Node";
@@ -27,6 +28,7 @@ export class GameNode extends Schema
   @type("number") column: number = -1;
   @type("string") owner: string = "";
   @type("boolean") playerSpawnTile: boolean = false;
+  @type({map: Building}) buildings = new MapSchema<Building>();
 }
 
 export class GameMap extends Schema
