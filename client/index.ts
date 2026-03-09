@@ -8,10 +8,10 @@ const MARGIN = 256;
 
 const client = new Client("ws://localhost:2567");
 let room: Room<GameRoomState> | null = null;
-
 const app = new Application();
 
 let mapBounds = { left: 0, right: 0, top: 0, bottom: 0 };
+
 
 (async () => {
     await app.init({
@@ -23,19 +23,6 @@ let mapBounds = { left: 0, right: 0, top: 0, bottom: 0 };
 
     const world = new Container();
     app.stage.addChild(world);
-
-    // Debug overlay — pinned to screen, not world
-    const debugText = new Text({ style: { fill: 0xffffff, fontSize: 13, fontFamily: "monospace" } });
-    debugText.x = 8;
-    debugText.y = 8;
-    app.stage.addChild(debugText);
-
-    function updateDebug() {
-        debugText.text =
-            `mapBounds  left:${mapBounds.left}  right:${mapBounds.right}  top:${mapBounds.top}  bottom:${mapBounds.bottom}\n` +
-            `world      x:${world.x.toFixed(1)}  y:${world.y.toFixed(1)}`;
-    }
-    app.ticker.add(updateDebug);
 
     app.canvas.addEventListener("contextmenu", (e: MouseEvent) => e.preventDefault());
 
@@ -65,6 +52,34 @@ let mapBounds = { left: 0, right: 0, top: 0, bottom: 0 };
 
     room.onStateChange.once((state) => {
         renderMap(state.map, world);
+    });
+
+    const timerEl    = document.getElementById("timer")!;
+    const dayEl      = document.getElementById("day")!;
+    const statePanel = document.getElementById("state-panel")!;
+    let dayEndTimestamp = 0;
+    let currentDay = 0;
+
+    room.onStateChange((state) => {
+        dayEndTimestamp = state.dayEndTimestamp;
+        currentDay      = state.currentDay;
+        dayEl.textContent = `Day ${currentDay}`;
+
+        const playerIds = [...state.players.keys()];
+        statePanel.textContent =
+            `Day: ${state.currentDay}\n` +
+            `dayEndTimestamp: ${dayEndTimestamp - Date.now()}\n` +
+            `Players (${state.players.size}):\n` +
+            (playerIds.length ? playerIds.map(id => `  ${id}`).join('\n') : '  none') + '\n' +
+            `Nodes: ${state.map.nodes.size}`;
+    });
+
+    app.ticker.add(() => {
+        if (!dayEndTimestamp) return;
+        const remaining = Math.max(0, Math.floor((dayEndTimestamp - Date.now()) / 1000));
+        const m = Math.floor(remaining / 60);
+        const s = String(remaining % 60).padStart(2, '0');
+        timerEl.textContent = `${m}:${s}`;
     });
 })();
 
