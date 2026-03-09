@@ -5,7 +5,8 @@ export type GameMapJSON = {
         name?: string;
         row: number;
         column: number;
-        stats?: { foodPerRound?: number; menPerRound?: number };
+        playerSpawnTile: boolean;
+        stats?: { foodPerRound?: number; menPerRound?: number; woodPerRound?: number };
     }>;
 };
 

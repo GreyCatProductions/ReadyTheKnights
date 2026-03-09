@@ -268,6 +268,14 @@
 
           <div class="sep"></div>
 
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+            <input id="spawnInput" type="checkbox" style="width:16px; height:16px; cursor:pointer;" />
+            <span>Player spawn tile</span>
+          </label>
+          <div class="muted" style="margin-top:4px;">Marks this node as a valid starting position for a player.</div>
+
+          <div class="sep"></div>
+
           <div class="row">
             <button class="btn primary" id="copyBtn">Copy JSON</button>
             <button class="btn secondary" id="downloadBtn">Download JSON</button>
@@ -302,8 +310,8 @@
   let counter = 1;
   let selectedId = "";
 
-  // nodes stores only name + stats. row/column are always derived from grid position.
-  let nodes = {};  // { [id]: { name, stats: { foodPerRound, menPerRound } } }
+  // nodes stores only name + stats + flags. row/column are always derived from grid position.
+  let nodes = {};  // { [id]: { name, stats: { foodPerRound, menPerRound, woodPerRound }, playerSpawnTile } }
 
   // ===== DOM refs =====
   const gridEl      = document.getElementById("grid");
@@ -324,6 +332,7 @@
   const renameInput= document.getElementById("renameInput");
   const foodInput  = document.getElementById("foodInput");
   const menInput   = document.getElementById("menInput");
+  const spawnInput = document.getElementById("spawnInput");
 
   const ioArea = document.getElementById("ioArea");
 
@@ -348,6 +357,7 @@
 
   foodInput.addEventListener("change", updateSelectedStats);
   menInput.addEventListener("change", updateSelectedStats);
+  spawnInput.addEventListener("change", updateSelectedStats);
 
   // ===== Helpers =====
   function makeGrid(s) {
@@ -356,7 +366,7 @@
 
   function ensureNode(id) {
     if (!nodes[id]) {
-      nodes[id] = { name: id, stats: { foodPerRound: 0, menPerRound: 0 } };
+      nodes[id] = { name: id, stats: { foodPerRound: 0, menPerRound: 0, woodPerRound: 0 }, playerSpawnTile: false };
     }
   }
 
@@ -378,9 +388,11 @@
           name: node.name ?? id,
           row: r,
           column: c,
+          playerSpawnTile: node.playerSpawnTile ?? false,
           stats: {
             foodPerRound: node.stats?.foodPerRound ?? 0,
-            menPerRound:  node.stats?.menPerRound  ?? 0
+            menPerRound:  node.stats?.menPerRound  ?? 0,
+            woodPerRound: node.stats?.woodPerRound ?? 0
           }
         };
       }
@@ -455,7 +467,9 @@
     if (!selectedId || !nodes[selectedId]) return;
     nodes[selectedId].stats.foodPerRound = parseInt(foodInput.value || "0", 10);
     nodes[selectedId].stats.menPerRound  = parseInt(menInput.value  || "0", 10);
+    nodes[selectedId].playerSpawnTile    = spawnInput.checked;
     syncTextarea();
+    renderGrid();
   }
 
   function renameSelected(newIdRaw) {
@@ -534,9 +548,11 @@
       grid[r][c] = id;
       nodes[id]  = {
         name: typeof n?.name === "string" ? n.name : id,
+        playerSpawnTile: n?.playerSpawnTile === true,
         stats: {
           foodPerRound: typeof n?.stats?.foodPerRound === "number" ? n.stats.foodPerRound : 0,
-          menPerRound:  typeof n?.stats?.menPerRound  === "number" ? n.stats.menPerRound  : 0
+          menPerRound:  typeof n?.stats?.menPerRound  === "number" ? n.stats.menPerRound  : 0,
+          woodPerRound: typeof n?.stats?.woodPerRound === "number" ? n.stats.woodPerRound : 0
         }
       };
     }
@@ -556,9 +572,10 @@
       for (let c = 0; c < size; c++) {
         const id  = grid[r][c];
         const div = document.createElement("div");
+        const isSpawn = id && nodes[id]?.playerSpawnTile;
         div.className = "cell" + (id ? " filled" : "") + (id && id === selectedId ? " selected" : "");
-        div.textContent = id || "·";
-        div.title = id ? `${id}  (row ${r}, col ${c})` : `row ${r}, col ${c}`;
+        div.textContent = id ? (isSpawn ? `★ ${id}` : id) : "·";
+        div.title = id ? `${id}  (row ${r}, col ${c})${isSpawn ? "  [spawn]" : ""}` : `row ${r}, col ${c}`;
         div.addEventListener("click", () => setCell(r, c));
         gridEl.appendChild(div);
       }
@@ -582,9 +599,10 @@
     infoRow.textContent = pos ? String(pos.row)    : "?";
     infoCol.textContent = pos ? String(pos.column) : "?";
 
-    renameInput.value = selectedId;
-    foodInput.value   = String(node.stats.foodPerRound ?? 0);
-    menInput.value    = String(node.stats.menPerRound  ?? 0);
+    renameInput.value  = selectedId;
+    foodInput.value    = String(node.stats.foodPerRound ?? 0);
+    menInput.value     = String(node.stats.menPerRound  ?? 0);
+    spawnInput.checked = node.playerSpawnTile ?? false;
   }
 
   function renderStatus() {
