@@ -1,82 +1,99 @@
-import { Client, Room, Callbacks } from "@colyseus/sdk";
-import Phaser from "phaser";
-import { GameMap, GameRoomState } from "../server/src/rooms/schema/GameRoomState"
+import { Client, Room } from "@colyseus/sdk";
+import { Application, Container, Text } from "pixi.js";
+import { GameMap, GameRoomState } from "../server/src/rooms/schema/GameRoomState";
+import { NodeSprite } from "./MapRendering/NodeSprite";
 
-export class GameScene extends Phaser.Scene {
-    preload() {
+export const CELL_SIZE = 128;
+const MARGIN = 256;
+
+const client = new Client("ws://localhost:2567");
+let room: Room<GameRoomState> | null = null;
+
+const app = new Application();
+
+let mapBounds = { left: 0, right: 0, top: 0, bottom: 0 };
+
+(async () => {
+    await app.init({
+        resizeTo: window,
+        backgroundColor: 0x898989,
+    });
+
+    document.getElementById("game")!.appendChild(app.canvas);
+
+    const world = new Container();
+    app.stage.addChild(world);
+
+    // Debug overlay — pinned to screen, not world
+    const debugText = new Text({ style: { fill: 0xffffff, fontSize: 13, fontFamily: "monospace" } });
+    debugText.x = 8;
+    debugText.y = 8;
+    app.stage.addChild(debugText);
+
+    function updateDebug() {
+        debugText.text =
+            `mapBounds  left:${mapBounds.left}  right:${mapBounds.right}  top:${mapBounds.top}  bottom:${mapBounds.bottom}\n` +
+            `world      x:${world.x.toFixed(1)}  y:${world.y.toFixed(1)}`;
     }
+    app.ticker.add(updateDebug);
 
-    client = new Client("ws://localhost:2567");
-    room: Room<GameRoomState> | null = null;
+    app.canvas.addEventListener("contextmenu", (e: MouseEvent) => e.preventDefault());
 
-    private nodeSprites = new Map<string, Phaser.GameObjects.Container>();
-    private edges!: Phaser.GameObjects.Graphics;
+    let isPanning = false;
+    let lastX = 0, lastY = 0;
 
-    async create() {
-        console.log("Joining room...");
+    app.canvas.addEventListener("pointerdown", (e: PointerEvent) => {
+        if (e.button !== 0) return;
+        isPanning = true;
+        lastX = e.clientX;
+        lastY = e.clientY;
+    });
+    app.canvas.addEventListener("pointermove", (e: PointerEvent) => {
+        if (!isPanning) return;
+        world.x += e.clientX - lastX;
+        world.y += e.clientY - lastY;
+        lastX = e.clientX;
+        lastY = e.clientY;
+        clampWorld(world);
+    });
+    app.canvas.addEventListener("pointerup",    (e: PointerEvent) => { if (e.button !== 0) return; isPanning = false; });
+    app.canvas.addEventListener("pointerleave", () => { isPanning = false; });
 
-        this.room = await this.client.joinOrCreate("my_room");
-        if (!this.room)
-            throw new Error("Failed to join room"); 
-        console.log("Joined successfully!");
+    console.log("Joining room...");
+    room = await client.joinOrCreate("my_room");
+    console.log("Joined successfully!");
 
-        this.input.mouse?.disableContextMenu();
-        this.input.on("pointerdown", (pointer: Phaser.Input.Pointer) => {
-        });
+    room.onStateChange.once((state) => {
+        renderMap(state.map, world);
+    });
+})();
 
-        this.cameras.main.setBounds(0, 0, 5000, 5000);
-        this.input.on("wheel", (_p: any, _o: any, _dx: number, dy: number) => {
-        const cam = this.cameras.main;
-        cam.zoom = Phaser.Math.Clamp(cam.zoom - dy * 0.001, 0.2, 2.5);
-        });
-
-        this.input.on("pointermove", (p: Phaser.Input.Pointer) => {
-        if (!p.isDown) return;
-        const cam = this.cameras.main;
-        cam.scrollX -= (p.x - p.prevPosition.x) / cam.zoom;
-        cam.scrollY -= (p.y - p.prevPosition.y) / cam.zoom;
-        });
-
-        this.room.onStateChange.once((state) =>
-        {
-            const map: GameMap = state.map;
-            this.renderMap(map);
-        })
-    }
-
-    update(time: number, delta: number): void {
-    }
-
-    renderMap(map: GameMap) {
-        const cell = 128;
-
-        // 1) Place nodes
-        map.nodes.forEach((node) => {
-            const col = node.column;
-            const row = node.row;
-
-            if(col === undefined || row === undefined)
-                throw new Error("Failed to render map. A node has undefined coordinates!");
-
-            const x = col * cell + cell / 2;
-            const y = row * cell + cell / 2;
-
-            this.add.rectangle(x, y, cell, cell, 0xff0000, 1);
-        });
-
-        console.log("Map drawn!");
-    }
+function clampWorld(world: Container) {
+    world.x = Math.max(world.x, MARGIN - mapBounds.right);
+    world.x = Math.min(world.x, app.screen.width - mapBounds.left - MARGIN);
+    world.y = Math.max(world.y, MARGIN - mapBounds.bottom);
+    world.y = Math.min(world.y, app.screen.height - mapBounds.top - MARGIN);
 }
 
+function renderMap(map: GameMap, world: Container) {
+    let minCol = Infinity, maxCol = -Infinity;
+    let minRow = Infinity, maxRow = -Infinity;
 
-const config: Phaser.Types.Core.GameConfig = {
-    type: Phaser.AUTO,
-    width: 800,
-    height: 600,
-    backgroundColor: '#898989',
-    parent: 'game',
-    pixelArt: true,
-    scene: [GameScene],
-};
+    map.nodes.forEach((node) => {
+        minCol = Math.min(minCol, node.column);
+        maxCol = Math.max(maxCol, node.column);
+        minRow = Math.min(minRow, node.row);
+        maxRow = Math.max(maxRow, node.row);
 
-const game = new Phaser.Game(config);
+        world.addChild(new NodeSprite(node));
+    });
+
+    mapBounds = {
+        left:   minCol * CELL_SIZE,
+        right:  (maxCol + 1) * CELL_SIZE,
+        top:    minRow * CELL_SIZE,
+        bottom: (maxRow + 1) * CELL_SIZE,
+    };
+
+    console.log("Map drawn!");
+}
