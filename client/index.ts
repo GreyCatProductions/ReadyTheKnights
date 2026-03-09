@@ -1,8 +1,9 @@
 import { Client, Room } from "@colyseus/sdk";
 import { Application, Container, Text } from "pixi.js";
-import { GameMap, GameRoomState } from "../server/src/rooms/schema/GameRoomState";
+import { GameMap, GameNode, GameRoomState } from "../server/src/rooms/schema/GameRoomState";
 import { NodeSprite } from "./MapRendering/NodeSprite";
 import { updateResourcePanel } from "./UI/ResourcePanel";
+import { MapSchema } from "@colyseus/schema";
 
 export const CELL_SIZE = 128;
 const MARGIN = 256;
@@ -12,6 +13,7 @@ let room: Room<GameRoomState> | null = null;
 const app = new Application();
 
 let mapBounds = { left: 0, right: 0, top: 0, bottom: 0 };
+const nodeSprites = new Map<string, NodeSprite>();
 
 
 (async () => {
@@ -53,6 +55,7 @@ let mapBounds = { left: 0, right: 0, top: 0, bottom: 0 };
 
     room.onStateChange.once((state) => {
         renderMap(state.map, world);
+        colorNodes(state.map.nodes);
     });
 
     const timerEl    = document.getElementById("timer")!;
@@ -65,6 +68,8 @@ let mapBounds = { left: 0, right: 0, top: 0, bottom: 0 };
         dayEndTimestamp = state.dayEndTimestamp;
         currentDay      = state.currentDay;
         dayEl.textContent = `Day ${currentDay}`;
+
+        colorNodes(state.map.nodes);
 
         const me = state.players.get(room!.sessionId);
         if (me) updateResourcePanel(me);
@@ -98,13 +103,15 @@ function renderMap(map: GameMap, world: Container) {
     let minCol = Infinity, maxCol = -Infinity;
     let minRow = Infinity, maxRow = -Infinity;
 
-    map.nodes.forEach((node) => {
+    map.nodes.forEach((node, id) => {
         minCol = Math.min(minCol, node.column);
         maxCol = Math.max(maxCol, node.column);
         minRow = Math.min(minRow, node.row);
         maxRow = Math.max(maxRow, node.row);
 
-        world.addChild(new NodeSprite(node));
+        const sprite = new NodeSprite(node);
+        nodeSprites.set(id, sprite);
+        world.addChild(sprite);
     });
 
     mapBounds = {
@@ -116,3 +123,14 @@ function renderMap(map: GameMap, world: Container) {
 
     console.log("Map drawn!");
 }
+function colorNodes(nodes: MapSchema<GameNode, string>) {
+    nodes.forEach((node, id) => {
+        const sprite = nodeSprites.get(id);
+        if (!sprite) return;
+        const color = node.owner === room!.sessionId ? 0x2255cc
+                    : node.owner !== ""              ? 0xcc2222
+                    :                                  0x555555;
+        sprite.setBackground(color);
+    });
+}
+
