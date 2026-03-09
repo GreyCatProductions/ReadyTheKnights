@@ -43,12 +43,81 @@
         white-space: pre;
         pointer-events: none;
     }
+
+    #context-menu {
+        display: none;
+        position: fixed;
+        background: #1e1e1e;
+        border: 1px solid #555;
+        min-width: 140px;
+        z-index: 100;
+        box-shadow: 2px 2px 8px rgba(0,0,0,0.6);
+    }
+    #context-menu .cm-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 6px 10px;
+        color: #aaa;
+        font: 700 11px ui-monospace, monospace;
+        border-bottom: 1px solid #444;
+        text-transform: uppercase;
+    }
+    #context-menu .cm-close {
+        display: inline;
+        width: auto;
+        padding: 0 4px;
+        color: #888;
+        font-size: 14px;
+    }
+    #context-menu .cm-close:hover {
+        background: #c0392b;
+        color: #fff;
+    }
+    #context-menu button {
+        display: block;
+        width: 100%;
+        padding: 7px 12px;
+        background: none;
+        border: none;
+        color: #eee;
+        font: 13px ui-sans-serif, sans-serif;
+        text-align: left;
+        cursor: pointer;
+    }
+    #context-menu button:hover {
+        background: #2e6ab1;
+    }
+
+    #resource-panel {
+        position: fixed;
+        bottom: 16px;
+        right: 16px;
+        background: rgba(0,0,0,0.75);
+        border: 1px solid #555;
+        padding: 10px 14px;
+        z-index: 50;
+        pointer-events: none;
+    }
+    .res-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 3px 0;
+        color: #eee;
+        font: 14px ui-sans-serif, sans-serif;
+    }
+    .res-icon  { font-size: 16px; width: 20px; text-align: center; }
+    .res-label { flex: 1; color: #aaa; }
+    .res-value { font-weight: 700; min-width: 40px; text-align: right; }
 </style>
 <body>
 <div id="game"></div>
 <div id="timer">0:00</div>
 <div id="day">Day —</div>
 <div id="state-panel"></div>
+<div id="context-menu"></div>
+<div id="resource-panel"></div>
 <script type="module" src="./index.ts"></script>
 </body>
 </html>

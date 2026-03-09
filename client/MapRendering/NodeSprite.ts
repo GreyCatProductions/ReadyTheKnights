@@ -1,6 +1,7 @@
 import { Container, Graphics, Rectangle, Text } from "pixi.js";
 import { GameNode } from "../../server/src/rooms/schema/GameRoomState";
 import { CELL_SIZE } from "../index";
+import { showContextMenu } from "../UI/ContextMenu";
 
 export class NodeSprite extends Container {
 
@@ -15,7 +16,7 @@ export class NodeSprite extends Container {
         this.on('pointerdown', (e) => {
             e.stopPropagation();
             if (e.button === 0) this.onLeftClick(node);
-            if (e.button === 2) this.onRightClick(node);
+            if (e.button === 2) this.onRightClick(node, e.clientX, e.clientY);
         });
 
         const rect = new Graphics();
@@ -37,7 +38,7 @@ export class NodeSprite extends Container {
         console.log('Left click:', node.name);
     }
 
-    onRightClick(node: GameNode) {
-        console.log('Right click:', node.name);
+    onRightClick(node: GameNode, screenX: number, screenY: number) {
+        showContextMenu(node, screenX, screenY);
     }
 }

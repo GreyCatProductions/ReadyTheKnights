@@ -2,6 +2,7 @@ import { Client, Room } from "@colyseus/sdk";
 import { Application, Container, Text } from "pixi.js";
 import { GameMap, GameRoomState } from "../server/src/rooms/schema/GameRoomState";
 import { NodeSprite } from "./MapRendering/NodeSprite";
+import { updateResourcePanel } from "./UI/ResourcePanel";
 
 export const CELL_SIZE = 128;
 const MARGIN = 256;
@@ -24,7 +25,7 @@ let mapBounds = { left: 0, right: 0, top: 0, bottom: 0 };
     const world = new Container();
     app.stage.addChild(world);
 
-    app.canvas.addEventListener("contextmenu", (e: MouseEvent) => e.preventDefault());
+    document.addEventListener("contextmenu", (e: MouseEvent) => e.preventDefault());
 
     let isPanning = false;
     let lastX = 0, lastY = 0;
@@ -64,6 +65,9 @@ let mapBounds = { left: 0, right: 0, top: 0, bottom: 0 };
         dayEndTimestamp = state.dayEndTimestamp;
         currentDay      = state.currentDay;
         dayEl.textContent = `Day ${currentDay}`;
+
+        const me = state.players.get(room!.sessionId);
+        if (me) updateResourcePanel(me);
 
         const playerIds = [...state.players.keys()];
         statePanel.textContent =
