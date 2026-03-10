@@ -3,7 +3,7 @@ import { Building, GameNode, NodeStats } from "../../server/src/rooms/schema/Gam
 import { MapSchema } from "@colyseus/schema";
 import { showContextMenu } from "../UI/ContextMenu";
 import { NODE_RESOURCES } from "../UI/SpriteKeyMap";
-import { CELL_SIZE } from "..";
+import { CELL_SIZE } from "../../shared/Constants.js";
 
 
 const X_PADDING = 8;

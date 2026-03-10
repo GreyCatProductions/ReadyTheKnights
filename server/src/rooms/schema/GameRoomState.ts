@@ -18,6 +18,7 @@ export class Building extends Schema {
   @type("string") ownerId: string = "";
   @type("number") posX: number = -1;
   @type("number") posY: number = -1;
+  @type("number") workerCount: number = -1;
 }
 
 export class GameNode extends Schema
@@ -26,7 +27,7 @@ export class GameNode extends Schema
   @type(NodeStats) stats: NodeStats = new NodeStats();
   @type("number") row: number = -1;
   @type("number") column: number = -1;
-  @type("string") owner: string = "";
+  @type("string") ownerId: string = "";
   @type("boolean") playerSpawnTile: boolean = false;
   @type({map: Building}) buildings = new MapSchema<Building>();
 }
@@ -36,9 +37,17 @@ export class GameMap extends Schema
   @type({ map: GameNode}) nodes = new MapSchema<GameNode>();
 }
 
+export class Unit extends Schema {
+  @type("string") ownerId: string = "";
+  @type("string") nodeId: string = "";
+  @type("number") posX: number = -1;
+  @type("number") posY: number = -1;
+}
+
 export class GameRoomState extends Schema {
 
   @type({ map: Player }) players = new MapSchema<Player>();
+  @type({ map : Unit }) units = new MapSchema<Unit>();
   @type(GameMap) map = new GameMap();
   @type("number") currentDay: number;
   @type("number") dayEndTimestamp: number;

@@ -1,11 +1,10 @@
 import { Client, Room } from "@colyseus/sdk";
-import { Assets, Application, Container, Text } from "pixi.js";
+import { Assets, Application, Container, Graphics } from "pixi.js";
 import { GameMap, GameNode, GameRoomState } from "../server/src/rooms/schema/GameRoomState";
 import { NodeSprite } from "./MapRendering/NodeSprite";
 import { updateResourcePanel } from "./UI/ResourcePanel";
 import { Callbacks } from "@colyseus/schema";
-
-export const CELL_SIZE = 128
+import { CELL_SIZE } from "../shared/Constants"
 
 const MARGIN = 256;
 
@@ -15,6 +14,13 @@ const app = new Application();
 
 let mapBounds = { left: 0, right: 0, top: 0, bottom: 0 };
 const nodeSprites = new Map<string, NodeSprite>();
+const unitGraphics = new Map<string, Graphics>();
+const ownerColors = new Map<string, number>();
+
+function getOwnerColor(ownerId: string): number {
+    if (!ownerColors.has(ownerId)) ownerColors.set(ownerId, Math.random() * 0xffffff);
+    return ownerColors.get(ownerId)!;
+}
 
 
 (async () => {
@@ -26,7 +32,9 @@ const nodeSprites = new Map<string, NodeSprite>();
     document.getElementById("game")!.appendChild(app.canvas);
 
     const world = new Container();
+    const unitLayer = new Container();
     app.stage.addChild(world);
+    app.stage.addChild(unitLayer);
 
     document.addEventListener("contextmenu", (e: MouseEvent) => e.preventDefault());
 
@@ -43,6 +51,8 @@ const nodeSprites = new Map<string, NodeSprite>();
         if (!isPanning) return;
         world.x += e.clientX - lastX;
         world.y += e.clientY - lastY;
+        unitLayer.x = world.x;
+        unitLayer.y = world.y;
         lastX = e.clientX;
         lastY = e.clientY;
         clampWorld(world);
@@ -67,6 +77,17 @@ const nodeSprites = new Map<string, NodeSprite>();
             callbacks.onChange(node, () => refreshNode(id, node));
             callbacks.onAdd(node, "buildings", () => refreshNode(id, node));
             callbacks.onRemove(node, "buildings", () => refreshNode(id, node));
+        });
+
+        callbacks.onAdd(state, "units", (unit, id) => {
+            const g = new Graphics();
+            g.circle(0, 0, 8).fill(getOwnerColor(unit.ownerId));
+            unitLayer.addChild(g);
+            unitGraphics.set(id, g);
+        });
+        callbacks.onRemove(state, "units", (_unit, id) => {
+            const g = unitGraphics.get(id);
+            if (g) { unitLayer.removeChild(g); g.destroy(); unitGraphics.delete(id); }
         });
     });
 
@@ -99,6 +120,17 @@ const nodeSprites = new Map<string, NodeSprite>();
         const m = Math.floor(remaining / 60);
         const s = String(remaining % 60).padStart(2, '0');
         timerEl.textContent = `${m}:${s}`;
+    });
+
+    app.ticker.add(() => {
+        if (!room || !room.state.units) return;
+        room.state.units.forEach((unit, id) => {
+            const g = unitGraphics.get(id);
+            const nodeSprite = nodeSprites.get(unit.nodeId);
+            if (!g || !nodeSprite) return;
+            g.x = nodeSprite.x + unit.posX;
+            g.y = nodeSprite.y + unit.posY;
+        });
     });
 })();
 
@@ -134,11 +166,12 @@ function renderMap(map: GameMap, world: Container) {
     console.log("Map drawn!");
 }
 
+
 function refreshNode(id: string, node: GameNode) {
     const sprite = nodeSprites.get(id);
     if (!sprite) return;
-    const color = node.owner === room!.sessionId ? 0x2255cc
-        : node.owner !== "" ? 0xcc2222
+    const color = node.ownerId === room!.sessionId ? 0x2255cc
+        : node.ownerId !== "" ? 0xcc2222
             : 0x555555;
     sprite.setBackground(color);
     sprite.updateBuildings(node.buildings);

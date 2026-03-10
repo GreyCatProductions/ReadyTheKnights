@@ -1,11 +1,11 @@
 import { Room, Client, CloseCode } from "colyseus";
 import { Building, GameRoomState, Player } from "./schema/GameRoomState.js";
-import MapTranslator from "../../../shared/src/MapCreation/MapTranslator.js";
+import { loadMapJSON } from "../../../shared/MapCreation/MapTranslator.js";
+import { processBuildings } from "./BuildingSystem.js";
+import { tickUnitMovement, removeUnitTarget } from "./UnitMovementSystem.js";
 import path from "node:path";
 import { createMap } from "./MapGeneration/MapGenerator.js";
-const { loadMapJSON } = MapTranslator;
-
-const CELL_SIZE = 128
+import { CELL_SIZE } from "../../../shared/Constants.js"
 
 export class GameRoom extends Room {
   maxClients = 4;
@@ -27,10 +27,17 @@ export class GameRoom extends Room {
     this.state.dayEndTimestamp = Date.now() + this.DAY_DURATION_MS;
     this.clock.setInterval(() => this.endDay(), this.DAY_DURATION_MS);
 
+    let lastTick = Date.now();
+    this.clock.setInterval(() => {
+      const now = Date.now();
+      tickUnitMovement(this.state, now - lastTick);
+      lastTick = now;
+    }, 100);
+
     this.onMessage("build", (client, { nodeId, buildingType }: { nodeId: string; buildingType: string }) => {
       const node = this.state.map.nodes.get(nodeId);
       if (!node) return;
-      if (node.owner !== client.sessionId) return;
+      if (node.ownerId !== client.sessionId) return;
 
       const building = new Building();
       building.type = buildingType;
@@ -43,8 +50,8 @@ export class GameRoom extends Room {
   private endDay() {
     this.state.currentDay++;
     this.state.dayEndTimestamp = Date.now() + this.DAY_DURATION_MS;
+    processBuildings(this.state);
     console.log(`Day ${this.state.currentDay} started`);
-    // TODO: resolve player actions here
   }
 
   onJoin(client: Client, options: any) {
@@ -52,10 +59,10 @@ export class GameRoom extends Room {
     const player = new Player();
     this.state.players.set(client.sessionId, player);
 
-    const freeSpawns = [...this.state.map.nodes.values()].filter(n => n.playerSpawnTile && n.owner === "");
+    const freeSpawns = [...this.state.map.nodes.values()].filter(n => n.playerSpawnTile && n.ownerId === "");
     if (freeSpawns.length > 0) {
       const spawnNode = freeSpawns[Math.floor(Math.random() * freeSpawns.length)];
-      spawnNode.owner = client.sessionId;
+      spawnNode.ownerId = client.sessionId;
       const base = new Building();
       base.type = "base";
       base.ownerId = client.sessionId;
@@ -71,6 +78,12 @@ export class GameRoom extends Room {
     console.log(client.sessionId, "left!", code);
 
     this.state.players.delete(client.sessionId);
+    this.state.units.forEach((unit, id) => {
+      if (unit.ownerId === client.sessionId) {
+        removeUnitTarget(id);
+        this.state.units.delete(id);
+      }
+    });
   }
 
   onDispose() {

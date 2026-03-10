@@ -20,7 +20,7 @@ export function showContextMenu(node: GameNode, sessionId: string, screenX: numb
         menu.appendChild(btn);
     }
 
-    if (node.owner === sessionId) {
+    if (node.ownerId === sessionId) {
         const sep = document.createElement("div");
         sep.className = "cm-separator";
         menu.appendChild(sep);
