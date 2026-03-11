@@ -1,6 +1,6 @@
 import { GameRoomState, GameNode } from "./schema/GameRoomState.js";
 import { removeUnitTarget } from "./UnitMovementSystem.js";
-import { CELL_SIZE } from "../../../shared/Constants.js";
+import { worldToGrid } from "../../../shared/Constants.js";
 
 const COMBAT_INTERVAL_MS = 500;
 const CAPTURE_TIME_MS = 5000;
@@ -25,8 +25,7 @@ function buildUnitsByNode(state: GameRoomState, nodeAtPos: Map<string, string>):
     const unitsByNode = new Map<string, Map<string, string[]>>();
 
     state.units.forEach((unit, id) => {
-        const col = Math.floor(unit.posX / CELL_SIZE);
-        const row = Math.floor(unit.posY / CELL_SIZE);
+        const { col, row } = worldToGrid(unit.posX, unit.posY);
         const nodeId = nodeAtPos.get(`${col},${row}`);
         if (!nodeId) return;
 

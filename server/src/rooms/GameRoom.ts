@@ -6,7 +6,7 @@ import { tickUnitMovement, removeUnitTarget } from "./UnitMovementSystem.js";
 import { tickBattles } from "./BattleSystem.js";
 import path from "node:path";
 import { createMap } from "./MapGeneration/MapGenerator.js";
-import { CELL_SIZE } from "../../../shared/Constants.js"
+import { CELL_SIZE, worldToGrid } from "../../../shared/Constants.js"
 import { spawnUnit } from "./UnitFactory.js";
 
 const UNITS_AT_START = 5;
@@ -51,7 +51,9 @@ export class GameRoom extends Room {
 
       const candidates: string[] = [];
       this.state.units.forEach((unit, id) => {
-        if (unit.ownerId === client.sessionId && unit.nodeId === from)
+        if (unit.ownerId !== client.sessionId) return;
+        const { col, row } = worldToGrid(unit.posX, unit.posY);
+        if (col === fromNode.column && row === fromNode.row)
           candidates.push(id);
       });
 
