@@ -106,23 +106,6 @@ function tickCombat(state: GameRoomState, unitsByNode: Map<string, Map<string, s
             removeUnitTarget(id);
             state.units.delete(id);
         }
-
-        // After the kill, count remaining units on this node
-        const survivors = new Map<string, number>();
-        state.units.forEach((unit) => {
-            const col = Math.floor(unit.posX / CELL_SIZE);
-            const row = Math.floor(unit.posY / CELL_SIZE);
-            if (nodeAtPos.get(`${col},${row}`) === nodeId)
-                survivors.set(unit.ownerId, (survivors.get(unit.ownerId) ?? 0) + 1);
-        });
-
-        // One side wiped — sole survivor still needs to hold for capture time
-        if (survivors.size === 1) {
-            const [survivorOwner] = survivors.keys();
-            const node = state.map.nodes.get(nodeId);
-            if (node && node.ownerId !== survivorOwner)
-                captureProgress.set(nodeId, { contesterId: survivorOwner, elapsed: 0 });
-        }
     });
 }
 
