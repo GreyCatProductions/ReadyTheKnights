@@ -26,11 +26,20 @@ export class NodeSprite extends Container {
         this.hitArea = new Rectangle(0, 0, CELL_SIZE, CELL_SIZE);
         this.eventMode = 'static';
 
+        const RIGHT_CLICK_MAX_DRAG = 32;
+        let rightDownX = 0, rightDownY = 0;
+
         this.on('pointerdown', (e) => {
+            if (e.button === 2) { rightDownX = e.x; rightDownY = e.y; }
+        });
+
+        this.on('pointerup', (e) => {
             e.stopPropagation();
-            if(e.button === 2)
-            {
-                showContextMenu(node, sessionId, e.x, e.y);
+            if (e.button === 2) {
+                const dx = e.x - rightDownX;
+                const dy = e.y - rightDownY;
+                if (Math.sqrt(dx * dx + dy * dy) <= RIGHT_CLICK_MAX_DRAG)
+                    showContextMenu(node, sessionId, e.x, e.y);
             }
         });
 
