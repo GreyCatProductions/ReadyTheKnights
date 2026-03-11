@@ -1,11 +1,13 @@
 import { Client } from "@colyseus/sdk";
-import { Assets, Application, Container } from "pixi.js";
+import { Application, Container } from "pixi.js";
 import { GameRoomState } from "../server/src/rooms/schema/GameRoomState";
 import { Callbacks } from "@colyseus/schema";
 import { renderMap, refreshNode } from "./Rendering/MapRenderer";
 import { setupUnitRenderer } from "./Rendering/UnitRenderer";
+import { setupTroopMoveOverlay } from "./Rendering/TroopMoveOverlay";
 import { setupHUD } from "./UI/HUD";
 import { setupCamera } from "./Camera";
+import { LoadAssets } from "./AssetLoader";
 
 export { CELL_SIZE } from "../shared/Constants";
 
@@ -17,29 +19,32 @@ const app = new Application();
     document.getElementById("game")!.appendChild(app.canvas);
     document.addEventListener("contextmenu", (e) => e.preventDefault());
 
-    const world     = new Container();
+    const world = new Container();
     const unitLayer = new Container();
     app.stage.addChild(world);
     app.stage.addChild(unitLayer);
 
     setupCamera(app, world, unitLayer);
+    const overlay = setupTroopMoveOverlay(app, world, (from, to, count) => {
+        console.log("Requesting to send troops", { from, to, count });
+        room.send("move_troops", { from, to, count });
+    });
 
-    Assets.add({ alias: 'base', src: 'sprites/buildings/base.png' });
-    await Assets.load('base');
+    await LoadAssets();
 
     console.log("Joining room...");
     const room = await client.joinOrCreate<GameRoomState>("my_room");
     console.log("Joined successfully!");
 
     room.onStateChange.once((state) => {
-        renderMap(state.map, world);
+        renderMap(state.map, world, room.sessionId, overlay);
 
         const callbacks = Callbacks.get(room);
 
         callbacks.onAdd(state.map, "nodes", (node, id) => {
             refreshNode(id, node, room.sessionId);
-            callbacks.onChange(node,     () => refreshNode(id, node, room.sessionId));
-            callbacks.onAdd(node,    "buildings", () => refreshNode(id, node, room.sessionId));
+            callbacks.onChange(node, () => refreshNode(id, node, room.sessionId));
+            callbacks.onAdd(node, "buildings", () => refreshNode(id, node, room.sessionId));
             callbacks.onRemove(node, "buildings", () => refreshNode(id, node, room.sessionId));
         });
 

@@ -1,12 +1,13 @@
 import { Container } from "pixi.js";
 import { GameMap, GameNode } from "../../server/src/rooms/schema/GameRoomState";
 import { NodeSprite } from "./NodeSprite";
+import { TroopMoveOverlay } from "./TroopMoveOverlay";
 import { CELL_SIZE } from "../../shared/Constants";
 
 export const nodeSprites = new Map<string, NodeSprite>();
 export let mapBounds = { left: 0, right: 0, top: 0, bottom: 0 };
 
-export function renderMap(map: GameMap, world: Container) {
+export function renderMap(map: GameMap, world: Container, sessionId: string, overlay?: TroopMoveOverlay) {
     let minCol = Infinity, maxCol = -Infinity;
     let minRow = Infinity, maxRow = -Infinity;
 
@@ -16,7 +17,7 @@ export function renderMap(map: GameMap, world: Container) {
         minRow = Math.min(minRow, node.row);
         maxRow = Math.max(maxRow, node.row);
 
-        const sprite = new NodeSprite(node, id);
+        const sprite = new NodeSprite(node, id, sessionId, overlay);
         nodeSprites.set(id, sprite);
         world.addChild(sprite);
     });

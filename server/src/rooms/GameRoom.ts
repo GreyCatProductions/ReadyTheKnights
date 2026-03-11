@@ -34,16 +34,30 @@ export class GameRoom extends Room {
       lastTick = now;
     }, 100);
 
-    this.onMessage("build", (client, { nodeId, buildingType }: { nodeId: string; buildingType: string }) => {
-      const node = this.state.map.nodes.get(nodeId);
-      if (!node) return;
-      if (node.ownerId !== client.sessionId) return;
+    this.onMessage("move_troops", (client, { from, to, count }: { from: string, to: string, count: number }) => {
+      const fromNode = this.state.map.nodes.get(from);
+      const toNode   = this.state.map.nodes.get(to);
+      if (!fromNode || !toNode) return;
+      if (fromNode.ownerId !== client.sessionId) return;
 
-      const building = new Building();
-      building.type = buildingType;
-      building.ownerId = client.sessionId;
-      node.buildings.set(buildingType, building);
-      console.log(`${client.sessionId} built ${buildingType} on ${node.name}`);
+      const colDiff = Math.abs(toNode.column - fromNode.column);
+      const rowDiff = Math.abs(toNode.row    - fromNode.row);
+      if (colDiff + rowDiff !== 1) return;
+
+      const candidates: string[] = [];
+      this.state.units.forEach((unit, id) => {
+        if (unit.ownerId === client.sessionId && unit.nodeId === from)
+          candidates.push(id);
+      });
+
+      const toMove = candidates.slice(0, count);
+      for (const id of toMove) {
+        const unit = this.state.units.get(id)!;
+        unit.nodeId = to;
+        removeUnitTarget(id);
+      }
+
+      console.log(`${client.sessionId} moving ${toMove.length}/${count} units: ${from} → ${to}`);
     });
   }
 

@@ -26,6 +26,7 @@ function handleSpawn(b: Building, def: BuildingDef, node: GameNode, nodeId: stri
         unit.posY = node.row    * CELL_SIZE + CELL_SIZE / 2;
         console.log("Spawned unit at " + unit.posX + " | " + unit.posY);
         state.units.set(uuid(), unit);
+        state.players.get(node.ownerId).manpower += 1;
     }
 }
 

@@ -4,6 +4,7 @@ import { MapSchema } from "@colyseus/schema";
 import { showContextMenu } from "../UI/ContextMenu";
 import { NODE_RESOURCES } from "../UI/SpriteKeyMap";
 import { CELL_SIZE } from "../../shared/Constants.js";
+import { TroopMoveOverlay } from "./TroopMoveOverlay";
 
 
 const X_PADDING = 8;
@@ -17,7 +18,9 @@ export class NodeSprite extends Container {
 
     constructor(
         node: GameNode,
+        nodeId: string,
         sessionId: string,
+        overlay?: TroopMoveOverlay,
     ) {
         super();
 
@@ -26,19 +29,27 @@ export class NodeSprite extends Container {
         this.hitArea = new Rectangle(0, 0, CELL_SIZE, CELL_SIZE);
         this.eventMode = 'static';
 
-        const RIGHT_CLICK_MAX_DRAG = 32;
+        const CONTEXT_MENU_MAX_DRAG = 8;
         let rightDownX = 0, rightDownY = 0;
 
         this.on('pointerdown', (e) => {
-            if (e.button === 2) { rightDownX = e.x; rightDownY = e.y; }
+            if (e.button === 2) {
+                rightDownX = e.x;
+                rightDownY = e.y;
+                overlay?.beginDrag(nodeId, node.column, node.row, e.x, e.y);
+            }
         });
 
         this.on('pointerup', (e) => {
             e.stopPropagation();
             if (e.button === 2) {
+                if (overlay?.isDragging) {
+                    overlay.completeDrag(nodeId);
+                    return;
+                }
                 const dx = e.x - rightDownX;
                 const dy = e.y - rightDownY;
-                if (Math.sqrt(dx * dx + dy * dy) <= RIGHT_CLICK_MAX_DRAG)
+                if (Math.sqrt(dx * dx + dy * dy) <= CONTEXT_MENU_MAX_DRAG)
                     showContextMenu(node, sessionId, e.x, e.y);
             }
         });
