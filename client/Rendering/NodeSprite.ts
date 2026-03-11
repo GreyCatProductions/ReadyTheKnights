@@ -15,6 +15,7 @@ export class NodeSprite extends Container {
 
     private bg: Graphics;
     private buildingLayer: Container;
+    private captureBar: Graphics;
 
     constructor(
         node: GameNode,
@@ -69,11 +70,13 @@ export class NodeSprite extends Container {
         label.y = CELL_SIZE / 2;
 
         this.buildingLayer = new Container();
+        this.captureBar = new Graphics();
 
         this.addChild(this.bg);
         this.addChild(this.buildingLayer);
         this.addChild(rect);
         this.addChild(label);
+        this.addChild(this.captureBar);
 
         NODE_RESOURCES.forEach(({ key, icon }, i) => {
             const value = Number(node.stats[key]) || 0;
@@ -102,6 +105,17 @@ export class NodeSprite extends Container {
             this.buildingLayer.addChild(t);
             i++;
         });
+    }
+
+    updateCaptureBar(progress: number, contestedBy: string, sessionId: string) {
+        this.captureBar.clear();
+        if (progress <= 0 || !contestedBy) return;
+        const BAR_H = 6;
+        const color = contestedBy === sessionId ? 0x2255cc : 0xcc2222;
+        // Background track
+        this.captureBar.rect(0, CELL_SIZE - BAR_H, CELL_SIZE, BAR_H).fill(0x000000);
+        // Filled portion
+        this.captureBar.rect(0, CELL_SIZE - BAR_H, CELL_SIZE * progress, BAR_H).fill(color);
     }
 
     setBackground(color: number) {

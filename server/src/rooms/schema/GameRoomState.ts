@@ -30,6 +30,8 @@ export class GameNode extends Schema
   @type("string") ownerId: string = "";
   @type("boolean") playerSpawnTile: boolean = false;
   @type({map: Building}) buildings = new MapSchema<Building>();
+  @type("string")  contestedBy: string = "";
+  @type("number")  captureProgress: number = 0;   // 0–1
 }
 
 export class GameMap extends Schema

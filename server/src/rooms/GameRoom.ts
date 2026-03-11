@@ -3,10 +3,13 @@ import { Building, GameRoomState, Player } from "./schema/GameRoomState.js";
 import { loadMapJSON } from "../../../shared/MapCreation/MapTranslator.js";
 import { processBuildings } from "./BuildingSystem.js";
 import { tickUnitMovement, removeUnitTarget } from "./UnitMovementSystem.js";
+import { tickBattles } from "./BattleSystem.js";
 import path from "node:path";
 import { createMap } from "./MapGeneration/MapGenerator.js";
 import { CELL_SIZE } from "../../../shared/Constants.js"
+import { spawnUnit } from "./UnitFactory.js";
 
+const UNITS_AT_START = 5;
 export class GameRoom extends Room {
   maxClients = 4;
   state = new GameRoomState();
@@ -31,6 +34,7 @@ export class GameRoom extends Room {
     this.clock.setInterval(() => {
       const now = Date.now();
       tickUnitMovement(this.state, now - lastTick);
+      tickBattles(this.state, now - lastTick);
       lastTick = now;
     }, 100);
 
@@ -38,7 +42,8 @@ export class GameRoom extends Room {
       const fromNode = this.state.map.nodes.get(from);
       const toNode   = this.state.map.nodes.get(to);
       if (!fromNode || !toNode) return;
-      if (fromNode.ownerId !== client.sessionId) return;
+
+      if(fromNode.ownerId != client.sessionId && toNode.ownerId != client.sessionId) return;
 
       const colDiff = Math.abs(toNode.column - fromNode.column);
       const rowDiff = Math.abs(toNode.row    - fromNode.row);
@@ -49,6 +54,8 @@ export class GameRoom extends Room {
         if (unit.ownerId === client.sessionId && unit.nodeId === from)
           candidates.push(id);
       });
+
+      if(candidates.length === 0) return;
 
       const toMove = candidates.slice(0, count);
       for (const id of toMove) {
@@ -73,9 +80,9 @@ export class GameRoom extends Room {
     const player = new Player();
     this.state.players.set(client.sessionId, player);
 
-    const freeSpawns = [...this.state.map.nodes.values()].filter(n => n.playerSpawnTile && n.ownerId === "");
+    const freeSpawns = [...this.state.map.nodes.entries()].filter(([, n]) => n.playerSpawnTile && n.ownerId === "");
     if (freeSpawns.length > 0) {
-      const spawnNode = freeSpawns[Math.floor(Math.random() * freeSpawns.length)];
+      const [spawnNodeId, spawnNode] = freeSpawns[Math.floor(Math.random() * freeSpawns.length)];
       spawnNode.ownerId = client.sessionId;
       const base = new Building();
       base.type = "base";
@@ -83,6 +90,10 @@ export class GameRoom extends Room {
       base.posX = CELL_SIZE / 2;
       base.posY = CELL_SIZE / 2;
       spawnNode.buildings.set("base", base);
+
+      for (let i = 0; i < UNITS_AT_START; i++) {
+        spawnUnit(this.state, client.sessionId, spawnNodeId);
+      }
     } else {
       console.warn(`No free spawn tile for ${client.sessionId}`);
     }
