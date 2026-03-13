@@ -14,5 +14,5 @@ export function spawnUnit(state: GameRoomState, ownerId: string, nodeId: string)
     state.units.set(uuid(), unit);
 
     const player = state.players.get(ownerId);
-    if (player) player.manpower += 1;
+    if (player) player.population += 1;
 }

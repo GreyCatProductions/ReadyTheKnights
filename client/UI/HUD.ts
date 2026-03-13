@@ -15,7 +15,8 @@ export function setupHUD(app: Application, room: Room<GameRoomState>) {
         dayEl.textContent = `Day ${state.currentDay}`;
 
         const me = state.players.get(room.sessionId);
-        if (me) updateResourcePanel(me);
+        const buildings = [...state.map.nodes.values()].flatMap(node => [...node.buildings.values()]);
+        if (me) updateResourcePanel(me, buildings);
 
         const playerIds = [...state.players.keys()];
         statePanel.textContent =

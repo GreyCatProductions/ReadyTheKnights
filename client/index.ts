@@ -6,6 +6,7 @@ import { renderMap, refreshNode } from "./Rendering/MapRenderer";
 import { setupUnitRenderer } from "./Rendering/UnitRenderer";
 import { setupTroopMoveOverlay } from "./Rendering/TroopMoveOverlay";
 import { setupHUD } from "./UI/HUD";
+import { setupCardHand } from "./UI/CardHand";
 import { setupCamera } from "./Camera";
 import { LoadAssets } from "./AssetLoader";
 
@@ -52,4 +53,9 @@ const app = new Application();
     });
 
     setupHUD(app, room);
+    setupCardHand(app, [
+        { label: "Card 1" },
+        { label: "Card 2" },
+        { label: "Card 3" },
+    ]);
 })();

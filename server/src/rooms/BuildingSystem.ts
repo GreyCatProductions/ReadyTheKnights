@@ -15,9 +15,23 @@ export function processBuildings(state: GameRoomState) {
     });
 }
 
+function getMaxPopulation(ownerId: string, state: GameRoomState): number {
+    let max = 0;
+    state.map.nodes.forEach(node => {
+        node.buildings.forEach(b => {
+            if (b.ownerId === ownerId) max += b.populationMaxIncrease ?? 0;
+        });
+    });
+    return max;
+}
+
 function handleSpawn(b: Building, def: BuildingDef, node: GameNode, nodeId: string, state: GameRoomState) {
     if (!def.spawnPerDay) return;
+    const player = state.players.get(node.ownerId);
+    if (!player) return;
+    const maxPop = getMaxPopulation(node.ownerId, state);
     for (let i = 0; i < def.spawnPerDay; i++) {
+        if (player.population >= maxPop) break;
         spawnUnit(state, node.ownerId, nodeId);
     }
 }

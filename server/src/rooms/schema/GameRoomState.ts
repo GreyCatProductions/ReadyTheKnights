@@ -2,7 +2,7 @@ import { MapSchema, Schema, type } from "@colyseus/schema";
 
 export class Player extends Schema
 {
-  @type("number") manpower: number = 0;
+  @type("number") population: number = 0;
   @type("number") wood: number = 0;
 }
 
@@ -19,6 +19,7 @@ export class Building extends Schema {
   @type("number") posX: number = -1;
   @type("number") posY: number = -1;
   @type("number") workerCount: number = -1;
+  @type("number") populationMaxIncrease: number = -1;
 }
 
 export class GameNode extends Schema

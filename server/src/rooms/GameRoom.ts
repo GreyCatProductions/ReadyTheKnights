@@ -1,12 +1,13 @@
 import { Room, Client, CloseCode } from "colyseus";
-import { Building, GameRoomState, Player } from "./schema/GameRoomState.js";
+import { GameRoomState, Player } from "./schema/GameRoomState.js";
+import { placeBuilding } from "./BuildingFactory.js";
 import { loadMapJSON } from "../../../shared/MapCreation/MapTranslator.js";
 import { processBuildings } from "./BuildingSystem.js";
 import { tickUnitMovement, removeUnitTarget } from "./UnitMovementSystem.js";
 import { tickBattles } from "./BattleSystem.js";
 import path from "node:path";
 import { createMap } from "./MapGeneration/MapGenerator.js";
-import { CELL_SIZE, worldToGrid } from "../../../shared/Constants.js"
+import { worldToGrid } from "../../../shared/Constants.js"
 import { spawnUnit } from "./UnitFactory.js";
 
 const UNITS_AT_START = 5;
@@ -86,12 +87,7 @@ export class GameRoom extends Room {
     if (freeSpawns.length > 0) {
       const [spawnNodeId, spawnNode] = freeSpawns[Math.floor(Math.random() * freeSpawns.length)];
       spawnNode.ownerId = client.sessionId;
-      const base = new Building();
-      base.type = "base";
-      base.ownerId = client.sessionId;
-      base.posX = CELL_SIZE / 2;
-      base.posY = CELL_SIZE / 2;
-      spawnNode.buildings.set("base", base);
+      placeBuilding(spawnNode, "base", client.sessionId);
 
       for (let i = 0; i < UNITS_AT_START; i++) {
         spawnUnit(this.state, client.sessionId, spawnNodeId);
