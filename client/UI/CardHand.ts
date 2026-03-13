@@ -11,9 +11,39 @@ export interface CardData {
     color?: number;
 }
 
-export function setupCardHand(app: Application, cards: CardData[]): { setCards: (cards: CardData[]) => void } {
+function buildCardGraphic(card: CardData, alpha = 1): Container {
+    const c = new Container();
+    c.alpha = alpha;
+
+    const g = new Graphics();
+    g.roundRect(0, 0, CARD_W, CARD_H, CARD_RADIUS).fill(card.color ?? 0x2a2a3a);
+    g.roundRect(0, 0, CARD_W, CARD_H, CARD_RADIUS).stroke({ width: 2, color: 0x000000 });
+    c.addChild(g);
+
+    const label = new Text({
+        text: card.label,
+        style: new TextStyle({ fontSize: 13, fill: 0xffffff, wordWrap: true, wordWrapWidth: CARD_W - 10, align: "center" }),
+    });
+    label.anchor.set(0.5, 0);
+    label.x = CARD_W / 2;
+    label.y = 8;
+    c.addChild(label);
+
+    return c;
+}
+
+export let isDraggingCard = false;
+
+export function setupCardHand(
+    app: Application,
+    cards: CardData[],
+    onDrop?: (card: CardData, screenX: number, screenY: number) => void,
+): { setCards: (cards: CardData[]) => void } {
     const container = new Container();
     app.stage.addChild(container);
+
+    let ghost: Container | null = null;
+    let dragCard: CardData | null = null;
 
     function render(cards: CardData[]) {
         container.removeChildren();
@@ -24,27 +54,42 @@ export function setupCardHand(app: Application, cards: CardData[]): { setCards: 
 
         cards.forEach((card, i) => {
             const x = startX + i * (CARD_W + CARD_GAP);
+            const c = buildCardGraphic(card);
+            c.x = x;
+            c.y = cardY;
+            c.eventMode = "static";
+            c.cursor = "grab";
 
-            const g = new Graphics();
-            g.roundRect(0, 0, CARD_W, CARD_H, CARD_RADIUS).fill(card.color ?? 0x2a2a3a);
-            g.roundRect(0, 0, CARD_W, CARD_H, CARD_RADIUS).stroke({ width: 2, color: 0x888888 });
-            g.x = x;
-            g.y = cardY;
-            container.addChild(g);
-
-            const label = new Text({
-                text: card.label,
-                style: new TextStyle({ fontSize: 13, fill: 0xffffff, wordWrap: true, wordWrapWidth: CARD_W - 10, align: "center" }),
+            c.on("pointerdown", (e) => {
+                e.stopPropagation();
+                dragCard = card;
+                isDraggingCard = true;
+                ghost = buildCardGraphic(card, 0.75);
+                ghost.x = e.clientX - CARD_W / 2;
+                ghost.y = e.clientY - CARD_H / 2;
+                app.stage.addChild(ghost);
             });
-            label.anchor.set(0.5, 0);
-            label.x = x + CARD_W / 2;
-            label.y = cardY + 8;
-            container.addChild(label);
+
+            container.addChild(c);
         });
     }
 
-    render(cards);
+    app.canvas.addEventListener("pointermove", (e) => {
+        if (!ghost) return;
+        ghost.x = e.clientX - CARD_W / 2;
+        ghost.y = e.clientY - CARD_H / 2;
+    });
 
+    app.canvas.addEventListener("pointerup", (e) => {
+        if (!ghost || !dragCard) return;
+        app.stage.removeChild(ghost);
+        ghost = null;
+        isDraggingCard = false;
+        onDrop?.(dragCard, e.clientX, e.clientY);
+        dragCard = null;
+    });
+
+    render(cards);
     app.renderer.on("resize", () => render(cards));
 
     return {

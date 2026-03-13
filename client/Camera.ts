@@ -1,5 +1,6 @@
 import { Application, Container } from "pixi.js";
 import { mapBounds } from "./Rendering/MapRenderer";
+import { isDraggingCard } from "./UI/CardHand";
 
 const MARGIN = 256;
 
@@ -9,6 +10,7 @@ export function setupCamera(app: Application, world: Container, ...syncedLayers:
 
     app.canvas.addEventListener("pointerdown", (e: PointerEvent) => {
         if (e.button !== 0) return;
+        if (isDraggingCard) return;
         isPanning = true;
         lastX = e.clientX;
         lastY = e.clientY;

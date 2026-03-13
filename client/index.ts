@@ -2,15 +2,15 @@ import { Client } from "@colyseus/sdk";
 import { Application, Container } from "pixi.js";
 import { GameRoomState } from "../server/src/rooms/schema/GameRoomState";
 import { Callbacks } from "@colyseus/schema";
-import { renderMap, refreshNode } from "./Rendering/MapRenderer";
+import { renderMap, refreshNode, nodeSprites } from "./Rendering/MapRenderer";
+import { CELL_SIZE, worldToGrid } from "../shared/Constants";
 import { setupUnitRenderer } from "./Rendering/UnitRenderer";
 import { setupTroopMoveOverlay } from "./Rendering/TroopMoveOverlay";
 import { setupHUD } from "./UI/HUD";
-import { setupCardHand } from "./UI/CardHand";
+import { setupCardHand as setupOrders } from "./UI/CardHand";
 import { setupCamera } from "./Camera";
 import { LoadAssets } from "./AssetLoader";
 
-export { CELL_SIZE } from "../shared/Constants";
 
 const client = new Client("ws://localhost:2567");
 const app = new Application();
@@ -53,9 +53,18 @@ const app = new Application();
     });
 
     setupHUD(app, room);
-    setupCardHand(app, [
-        { label: "Card 1" },
-        { label: "Card 2" },
-        { label: "Card 3" },
-    ]);
+    setupOrders(app, [
+        { label: "Harvest Edict" },
+        { label: "Lumber Edict" },
+        { label: "Settle Edict" },
+    ], (card, screenX, screenY) => {
+        const worldX = screenX - world.x;
+        const worldY = screenY - world.y;
+        const { col, row } = worldToGrid(worldX, worldY);
+        const nodeId = [...nodeSprites.entries()]
+            .find(([, sprite]) => sprite.x / CELL_SIZE === col && sprite.y / CELL_SIZE === row)?.[0];
+        if (!nodeId) return;
+        console.log(`Issuing ${card.label} to node ${nodeId}`);
+        room.send("edict", { nodeId, edict: card.label });
+    });
 })();

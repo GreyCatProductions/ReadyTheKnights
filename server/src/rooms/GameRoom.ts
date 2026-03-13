@@ -9,6 +9,7 @@ import path from "node:path";
 import { createMap } from "./MapGeneration/MapGenerator.js";
 import { worldToGrid } from "../../../shared/Constants.js"
 import { spawnUnit } from "./UnitFactory.js";
+import { EDICT_BUILDING } from "../../../shared/BuildingDefs.js";
 
 const UNITS_AT_START = 5;
 export class GameRoom extends Room {
@@ -68,6 +69,17 @@ export class GameRoom extends Room {
       }
 
       console.log(`${client.sessionId} moving ${toMove.length}/${count} units: ${from} → ${to}`);
+    });
+
+    this.onMessage("edict", (client, { nodeId, edict }: { nodeId: string, edict: string }) => {
+      const node = this.state.map.nodes.get(nodeId);
+      if (!node || node.ownerId !== client.sessionId) return;
+
+      const buildingType = EDICT_BUILDING[edict];
+      if (!buildingType) return;
+
+      console.log(`${client.sessionId} issued "${edict}" on ${nodeId}`);
+      //TODO: do some kind of visual representation of the current edict, make troops on the node do stuff (build) according to the edict
     });
   }
 
