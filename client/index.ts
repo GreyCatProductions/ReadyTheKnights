@@ -10,6 +10,7 @@ import { setupHUD } from "./UI/HUD";
 import { setupCardHand as setupOrders } from "./UI/CardHand";
 import { setupCamera } from "./Camera";
 import { LoadAssets } from "./AssetLoader";
+import { Edict } from "../shared/Edicts";
 
 
 const client = new Client("ws://localhost:2567");
@@ -54,9 +55,9 @@ const app = new Application();
 
     setupHUD(app, room);
     setupOrders(app, [
-        { label: "Harvest Edict" },
-        { label: "Lumber Edict" },
-        { label: "Settle Edict" },
+        { edict: Edict.HarvestEdict },
+        { edict: Edict.LumberEdict },
+        { edict: Edict.SettleEdict },
     ], (card, screenX, screenY) => {
         const worldX = screenX - world.x;
         const worldY = screenY - world.y;
@@ -64,7 +65,7 @@ const app = new Application();
         const nodeId = [...nodeSprites.entries()]
             .find(([, sprite]) => sprite.x / CELL_SIZE === col && sprite.y / CELL_SIZE === row)?.[0];
         if (!nodeId) return;
-        console.log(`Issuing ${card.label} to node ${nodeId}`);
-        room.send("edict", { nodeId, edict: card.label });
+        console.log(`Issuing ${card.edict} to node ${nodeId}`);
+        room.send("edict", { nodeId, edict: card.edict });
     });
 })();

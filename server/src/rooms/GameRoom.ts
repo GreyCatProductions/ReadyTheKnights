@@ -9,7 +9,8 @@ import path from "node:path";
 import { createMap } from "./MapGeneration/MapGenerator.js";
 import { worldToGrid } from "../../../shared/Constants.js"
 import { spawnUnit } from "./UnitFactory.js";
-import { EDICT_BUILDING } from "../../../shared/BuildingDefs.js";
+import { EDICT_BUILDINGS } from "../../../shared/BuildingDefs.js";
+import { Edict } from "../../../shared/Edicts.js";
 
 const UNITS_AT_START = 5;
 export class GameRoom extends Room {
@@ -71,11 +72,11 @@ export class GameRoom extends Room {
       console.log(`${client.sessionId} moving ${toMove.length}/${count} units: ${from} → ${to}`);
     });
 
-    this.onMessage("edict", (client, { nodeId, edict }: { nodeId: string, edict: string }) => {
+    this.onMessage("edict", (client, { nodeId, edict }: { nodeId: string, edict: Edict }) => {
       const node = this.state.map.nodes.get(nodeId);
       if (!node || node.ownerId !== client.sessionId) return;
 
-      const buildingType = EDICT_BUILDING[edict];
+      const buildingType = EDICT_BUILDINGS[edict];
       if (!buildingType) return;
 
       console.log(`${client.sessionId} issued "${edict}" on ${nodeId}`);

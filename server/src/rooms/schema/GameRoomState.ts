@@ -22,6 +22,11 @@ export class Building extends Schema {
   @type("number") populationMaxIncrease: number = -1;
 }
 
+export class Edict extends Schema
+{
+  @type(Edict) edict: Edict = new Edict();
+}
+
 export class GameNode extends Schema
 {
   @type("string") name: string = "Node";

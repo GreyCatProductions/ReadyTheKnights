@@ -1,4 +1,6 @@
-import { Application, Container, Graphics, Text, TextStyle } from "pixi.js";
+import { Application, Container, Graphics, Sprite, Text, TextStyle } from "pixi.js";
+import { Edict } from "../../shared/Edicts.js";
+import { EDICT_SPRITE } from "../AssetLoader.js";
 
 const CARD_W = 90;
 const CARD_H = 130;
@@ -7,7 +9,7 @@ const CARD_BOTTOM_MARGIN = 20;
 const CARD_RADIUS = 8;
 
 export interface CardData {
-    label: string;
+    edict: Edict;
     color?: number;
 }
 
@@ -20,13 +22,21 @@ function buildCardGraphic(card: CardData, alpha = 1): Container {
     g.roundRect(0, 0, CARD_W, CARD_H, CARD_RADIUS).stroke({ width: 2, color: 0x000000 });
     c.addChild(g);
 
+    const icon = Sprite.from(EDICT_SPRITE[card.edict]);
+    icon.width = 48;
+    icon.height = 48;
+    icon.anchor.set(0.5, 0);
+    icon.x = CARD_W / 2;
+    icon.y = 10;
+    c.addChild(icon);
+
     const label = new Text({
-        text: card.label,
-        style: new TextStyle({ fontSize: 13, fill: 0xffffff, wordWrap: true, wordWrapWidth: CARD_W - 10, align: "center" }),
+        text: card.edict,
+        style: new TextStyle({ fontSize: 11, fill: 0xffffff, wordWrap: true, wordWrapWidth: CARD_W - 10, align: "center" }),
     });
     label.anchor.set(0.5, 0);
     label.x = CARD_W / 2;
-    label.y = 8;
+    label.y = 64;
     c.addChild(label);
 
     return c;
