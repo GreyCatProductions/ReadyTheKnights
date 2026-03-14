@@ -39,4 +39,5 @@ export function refreshNode(id: string, node: GameNode, sessionId: string) {
     sprite.setBackground(color);
     sprite.updateBuildings(node.buildings);
     sprite.updateCaptureBar(node.captureProgress, node.contestedBy, sessionId);
+    sprite.updateEdict(node.edict);
 }

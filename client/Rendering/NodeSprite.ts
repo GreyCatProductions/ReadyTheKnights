@@ -5,6 +5,7 @@ import { showContextMenu } from "../UI/ContextMenu";
 import { NODE_RESOURCES } from "../UI/SpriteKeyMap";
 import { CELL_SIZE } from "../../shared/Constants.js";
 import { TroopMoveOverlay } from "./TroopMoveOverlay";
+import { EDICT_SPRITE } from "../AssetLoader.js";
 
 
 const X_PADDING = 8;
@@ -16,6 +17,7 @@ export class NodeSprite extends Container {
     private bg: Graphics;
     private buildingLayer: Container;
     private captureBar: Graphics;
+    private edictIcon: Sprite;
 
     constructor(
         node: GameNode,
@@ -72,11 +74,19 @@ export class NodeSprite extends Container {
         this.buildingLayer = new Container();
         this.captureBar = new Graphics();
 
+        this.edictIcon = new Sprite();
+        this.edictIcon.width = 32;
+        this.edictIcon.height = 32;
+        this.edictIcon.x = CELL_SIZE - 36;
+        this.edictIcon.y = 4;
+        this.edictIcon.visible = false;
+
         this.addChild(this.bg);
         this.addChild(this.buildingLayer);
         this.addChild(rect);
         this.addChild(label);
         this.addChild(this.captureBar);
+        this.addChild(this.edictIcon);
 
         NODE_RESOURCES.forEach(({ key, icon }, i) => {
             const value = Number(node.stats[key]) || 0;
@@ -116,6 +126,16 @@ export class NodeSprite extends Container {
         this.captureBar.rect(0, CELL_SIZE - BAR_H, CELL_SIZE, BAR_H).fill(0x000000);
         // Filled portion
         this.captureBar.rect(0, CELL_SIZE - BAR_H, CELL_SIZE * progress, BAR_H).fill(color);
+    }
+
+    updateEdict(edict: string) {
+        const spriteKey = EDICT_SPRITE[edict as keyof typeof EDICT_SPRITE];
+        if (spriteKey) {
+            this.edictIcon.texture = Texture.from(spriteKey);
+            this.edictIcon.visible = true;
+        } else {
+            this.edictIcon.visible = false;
+        }
     }
 
     setBackground(color: number) {

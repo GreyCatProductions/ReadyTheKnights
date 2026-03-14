@@ -1,11 +1,12 @@
 import { Building, GameNode, GameRoomState } from "./schema/GameRoomState.js";
 import { BuildingDef, BUILDING_DEFS } from "../../../shared/BuildingDefs.js";
+import { BuildingType } from "../../../shared/Buildings.js";
 import { spawnUnit } from "./UnitFactory.js";
 
 export function processBuildings(state: GameRoomState) {
     state.map.nodes.forEach((node, nodeId) => {
         node.buildings.forEach((building) => {
-            const def = BUILDING_DEFS[building.type];
+            const def = BUILDING_DEFS[building.type as BuildingType];
             if (!def) return;
 
             if (def.category === "spawn")    handleSpawn(building, def, node, nodeId, state);

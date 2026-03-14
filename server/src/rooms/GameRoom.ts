@@ -79,8 +79,8 @@ export class GameRoom extends Room {
       const buildingType = EDICT_BUILDINGS[edict];
       if (!buildingType) return;
 
+      node.edict = edict;
       console.log(`${client.sessionId} issued "${edict}" on ${nodeId}`);
-      //TODO: do some kind of visual representation of the current edict, make troops on the node do stuff (build) according to the edict
     });
   }
 
