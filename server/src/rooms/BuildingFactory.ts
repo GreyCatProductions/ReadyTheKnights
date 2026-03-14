@@ -1,8 +1,9 @@
 import { Building, GameNode } from "./schema/GameRoomState.js";
 import { BUILDING_DEFS } from "../../../shared/BuildingDefs.js";
 import { CELL_SIZE } from "../../../shared/Constants.js";
+import { BuildingType } from "../../../shared/Buildings.js";
 
-export function createBuilding(type: string, ownerId: string): Building {
+export function createBuilding(type: BuildingType, ownerId: string): Building {
     const def = BUILDING_DEFS[type];
     if (!def) throw new Error(`Unknown building type: ${type}`);
 
@@ -15,7 +16,7 @@ export function createBuilding(type: string, ownerId: string): Building {
     return b;
 }
 
-export function placeBuilding(node: GameNode, type: string, ownerId: string): Building {
+export function placeBuilding(node: GameNode, type: BuildingType, ownerId: string): Building {
     const b = createBuilding(type, ownerId);
     node.buildings.set(type, b);
     return b;

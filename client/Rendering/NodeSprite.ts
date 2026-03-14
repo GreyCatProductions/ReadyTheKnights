@@ -1,11 +1,11 @@
-import { Container, Graphics, Rectangle, Sprite, Text, Texture } from "pixi.js";
+import { AnimatedSprite, Container, Graphics, Rectangle, Sprite, Text, Texture } from "pixi.js";
 import { Building, GameNode, NodeStats } from "../../server/src/rooms/schema/GameRoomState";
 import { MapSchema } from "@colyseus/schema";
 import { showContextMenu } from "../UI/ContextMenu";
 import { NODE_RESOURCES } from "../UI/SpriteKeyMap";
 import { CELL_SIZE } from "../../shared/Constants.js";
 import { TroopMoveOverlay } from "./TroopMoveOverlay";
-import { EDICT_SPRITE } from "../AssetLoader.js";
+import { BUILDING_FRAMES, EDICT_SPRITE, makeAnimatedSprite } from "../AssetLoader.js";
 
 
 const X_PADDING = 8;
@@ -106,14 +106,15 @@ export class NodeSprite extends Container {
 
     updateBuildings(buildings: MapSchema<Building>) {
         this.buildingLayer.removeChildren();
-        let i = 0;
         buildings.forEach((building) => {
-            const t = new Sprite(Texture.from(building.type));
-            t.x = building.posX;
-            t.y = building.posY;
-            t.anchor = 0.5;
-            this.buildingLayer.addChild(t);
-            i++;
+            const frameCount = BUILDING_FRAMES[building.type];
+            const sprite = frameCount
+                ? makeAnimatedSprite(building.type, frameCount)
+                : new Sprite(Texture.from(building.type));
+            sprite.x = building.posX;
+            sprite.y = building.posY;
+            (sprite as Sprite).anchor.set(0.5);
+            this.buildingLayer.addChild(sprite);
         });
     }
 

@@ -1,9 +1,12 @@
 import { Building, GameNode, GameRoomState } from "./schema/GameRoomState.js";
-import { BuildingDef, BUILDING_DEFS } from "../../../shared/BuildingDefs.js";
+import { BuildingDef, BUILDING_DEFS, EDICT_BUILDINGS } from "../../../shared/BuildingDefs.js";
 import { BuildingType } from "../../../shared/Buildings.js";
 import { spawnUnit } from "./UnitFactory.js";
+import { Edict } from "../../../shared/Edicts.js";
+import { placeBuilding } from "./BuildingFactory.js";
+import { worldToGrid } from "../../../shared/Constants.js";
 
-export function processBuildings(state: GameRoomState) {
+export function tickNodes(state: GameRoomState) {
     state.map.nodes.forEach((node, nodeId) => {
         node.buildings.forEach((building) => {
             const def = BUILDING_DEFS[building.type as BuildingType];
@@ -13,6 +16,8 @@ export function processBuildings(state: GameRoomState) {
             if (def.category === "resource") handleResource(building, def, node, state);
             if (def.category === "defense")  handleDefense(building, def, node, state);
         });
+
+        if (node.edict) handleEdict(node, nodeId, state);
     });
 }
 
@@ -47,4 +52,12 @@ function handleResource(b: Building, def: BuildingDef, node: GameNode, state: Ga
 
 function handleDefense(b: Building, def: BuildingDef, node: GameNode, state: GameRoomState) {
     // TODO: combat resolution
+}
+
+function handleEdict(node: GameNode, nodeId: string, state: GameRoomState) {
+    const buildingType = EDICT_BUILDINGS[node.edict as Edict];
+    if (!buildingType) return;
+
+    placeBuilding(node, buildingType, node.ownerId);
+    console.log(`Built ${buildingType} on ${nodeId} from edict "${node.edict}"`);
 }

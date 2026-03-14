@@ -2,6 +2,6 @@ export type BuildingType = typeof BuildingType[keyof typeof BuildingType];
 
 export const BuildingType = {
     Base:       "base",
-    LumberMill: "lumber_mill",
+    Windmill: "windmill",
     Houses:     "houses",
 } as const;

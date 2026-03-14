@@ -2,7 +2,7 @@ import { Room, Client, CloseCode } from "colyseus";
 import { GameRoomState, Player } from "./schema/GameRoomState.js";
 import { placeBuilding } from "./BuildingFactory.js";
 import { loadMapJSON } from "../../../shared/MapCreation/MapTranslator.js";
-import { processBuildings } from "./BuildingSystem.js";
+import { tickNodes } from "./BuildingSystem.js";
 import { tickUnitMovement, removeUnitTarget } from "./UnitMovementSystem.js";
 import { tickBattles } from "./BattleSystem.js";
 import path from "node:path";
@@ -87,7 +87,7 @@ export class GameRoom extends Room {
   private endDay() {
     this.state.currentDay++;
     this.state.dayEndTimestamp = Date.now() + this.DAY_DURATION_MS;
-    processBuildings(this.state);
+    tickNodes(this.state);
     console.log(`Day ${this.state.currentDay} started`);
   }
 
