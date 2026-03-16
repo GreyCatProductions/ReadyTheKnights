@@ -18,8 +18,8 @@ export class Building extends Schema {
   @type("string") ownerId: string = "";
   @type("number") posX: number = -1;
   @type("number") posY: number = -1;
-  @type("number") workerCount: number = -1;
-  @type("number") populationMaxIncrease: number = -1;
+  @type("number") workerCount: number = 0;
+  @type("number") populationMaxIncrease: number = 0;
 }
 
 export class GameNode extends Schema

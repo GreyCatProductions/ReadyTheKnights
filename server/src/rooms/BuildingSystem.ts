@@ -58,6 +58,6 @@ function handleEdict(node: GameNode, nodeId: string, state: GameRoomState) {
     if (!buildingType) return;
     if (node.buildings.has(buildingType)) return;
 
-    placeBuilding(node, buildingType, node.ownerId);
+    placeBuilding(node, buildingType, node.ownerId, state, nodeId);
     console.log(`Built ${buildingType} on ${nodeId} from edict "${node.edict}"`);
 }

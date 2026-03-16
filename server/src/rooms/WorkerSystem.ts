@@ -29,6 +29,6 @@ export function unassignWorker(state: GameRoomState, unitId: string) {
             break;
         }
     }
-
+    
     unit.assignedBuilding = "";
 }
