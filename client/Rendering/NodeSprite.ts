@@ -5,7 +5,8 @@ import { showContextMenu } from "../UI/ContextMenu";
 import { NODE_RESOURCES } from "../UI/SpriteKeyMap";
 import { CELL_SIZE } from "../../shared/Constants.js";
 import { TroopMoveOverlay } from "./TroopMoveOverlay";
-import { BUILDING_FRAMES, EDICT_SPRITE, makeAnimatedSprite } from "../AssetLoader.js";
+import { BUILDING_COLOR, BUILDING_FRAMES, EDICT_SPRITE, makeAnimatedSprite } from "../AssetLoader.js";
+import { BUILDING_DEFS, BuildingType } from "../../shared/BuildingDefs.js";
 
 
 const X_PADDING = 8;
@@ -18,6 +19,7 @@ export class NodeSprite extends Container {
     private buildingLayer: Container;
     private captureBar: Graphics;
     private edictIcon: Sprite;
+    private workerLabel: Container;
 
     constructor(
         node: GameNode,
@@ -81,12 +83,17 @@ export class NodeSprite extends Container {
         this.edictIcon.y = 4;
         this.edictIcon.visible = false;
 
+        this.workerLabel = new Container();
+        this.workerLabel.x = 4;
+        this.workerLabel.y = 4;
+
         this.addChild(this.bg);
         this.addChild(this.buildingLayer);
         this.addChild(rect);
         this.addChild(label);
         this.addChild(this.captureBar);
         this.addChild(this.edictIcon);
+        this.addChild(this.workerLabel);
 
         NODE_RESOURCES.forEach(({ key, icon }, i) => {
             const value = Number(node.stats[key]) || 0;
@@ -115,6 +122,23 @@ export class NodeSprite extends Container {
             sprite.y = building.posY;
             (sprite as Sprite).anchor.set(0.5);
             this.buildingLayer.addChild(sprite);
+        });
+    }
+
+    updateWorkerLabel(buildings: MapSchema<Building>) {
+        this.workerLabel.removeChildren();
+        let row = 0;
+        buildings.forEach((building) => {
+            const def = BUILDING_DEFS[building.type as BuildingType];
+            if (!def?.maxWorkers) return;
+            const color = BUILDING_COLOR[building.type] ?? 0xffffff;
+            const t = new Text({
+                text: `${building.workerCount}/${def.maxWorkers}`,
+                style: { fill: color, fontSize: 11 },
+            });
+            t.y = row * 14;
+            this.workerLabel.addChild(t);
+            row++;
         });
     }
 

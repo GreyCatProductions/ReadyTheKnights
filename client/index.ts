@@ -46,7 +46,10 @@ const app = new Application();
         callbacks.onAdd(state.map, "nodes", (node, id) => {
             refreshNode(id, node, room.sessionId);
             callbacks.onChange(node, () => refreshNode(id, node, room.sessionId));
-            callbacks.onAdd(node, "buildings", () => refreshNode(id, node, room.sessionId));
+            callbacks.onAdd(node, "buildings", (building) => {
+                refreshNode(id, node, room.sessionId);
+                callbacks.onChange(building, () => nodeSprites.get(id)?.updateWorkerLabel(node.buildings));
+            });
             callbacks.onRemove(node, "buildings", () => refreshNode(id, node, room.sessionId));
         });
 

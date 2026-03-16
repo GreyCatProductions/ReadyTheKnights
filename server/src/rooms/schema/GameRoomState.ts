@@ -46,6 +46,7 @@ export class Unit extends Schema {
   @type("string") nodeId: string = "";
   @type("number") posX: number = -1;
   @type("number") posY: number = -1;
+  @type("string") assignedBuilding: string = "";
 }
 
 export class GameRoomState extends Schema {

@@ -1,7 +1,6 @@
 import { Building, GameNode } from "./schema/GameRoomState.js";
-import { BUILDING_DEFS } from "../../../shared/BuildingDefs.js";
+import { BUILDING_DEFS, BuildingType } from "../../../shared/BuildingDefs.js";
 import { CELL_SIZE } from "../../../shared/Constants.js";
-import { BuildingType } from "../../../shared/Buildings.js";
 
 export function createBuilding(type: BuildingType, ownerId: string): Building {
     const def = BUILDING_DEFS[type];

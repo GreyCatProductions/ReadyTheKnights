@@ -102,7 +102,7 @@ function tickCombat(state: GameRoomState, unitsByNode: Map<string, Map<string, s
         // Kill one unit per side simultaneously
         for (const unitIds of byOwner.values()) {
             const id = unitIds[unitIds.length - 1];
-            removeUnitTarget(id);
+            removeUnitTarget(id, state);
             state.units.delete(id);
         }
     });

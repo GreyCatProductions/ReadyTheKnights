@@ -66,7 +66,7 @@ export class GameRoom extends Room {
       for (const id of toMove) {
         const unit = this.state.units.get(id)!;
         unit.nodeId = to;
-        removeUnitTarget(id);
+        removeUnitTarget(id, this.state);
       }
 
       console.log(`${client.sessionId} moving ${toMove.length}/${count} units: ${from} → ${to}`);
@@ -116,7 +116,7 @@ export class GameRoom extends Room {
     this.state.players.delete(client.sessionId);
     this.state.units.forEach((unit, id) => {
       if (unit.ownerId === client.sessionId) {
-        removeUnitTarget(id);
+        removeUnitTarget(id, this.state);
         this.state.units.delete(id);
       }
     });

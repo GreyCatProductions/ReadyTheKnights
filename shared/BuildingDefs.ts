@@ -1,5 +1,13 @@
 import { Edict } from "./Edicts.js";
-import { BuildingType } from "./Buildings.js"
+
+export type BuildingType = typeof BuildingType[keyof typeof BuildingType];
+
+export const BuildingType = {
+    Base:       "base",
+    Windmill: "windmill",
+    Houses:     "houses",
+    Lumber_yard: "lumber_yard"
+} as const;
 
 export type BuildingDef = {
     category: "spawn" | "resource" | "defense";
@@ -13,12 +21,13 @@ export type BuildingDef = {
 export const BUILDING_DEFS: Record<BuildingType, BuildingDef> =
 {
     [BuildingType.Base]: { category: "spawn", spawnPerDay: 1, resourceType: null, populationMaxIncrease: 10, resourcePerWorker: null },
-    [BuildingType.Windmill]: { category: "resource", spawnPerDay: 0, resourceType: "wheat", populationMaxIncrease: 0, resourcePerWorker: 1, maxWorkers: 3 },
+    [BuildingType.Windmill]: { category: "resource", resourceType: "wheat", resourcePerWorker: 1, maxWorkers: 3 },
     [BuildingType.Houses]: { category: "spawn", spawnPerDay: 1, resourceType: null, populationMaxIncrease: 5, resourcePerWorker: null },
+    [BuildingType.Lumber_yard]: { category: "resource", resourceType: "wood", resourcePerWorker: 1, maxWorkers: 2 },
 };
 
 export const EDICT_BUILDINGS: Record<Edict, BuildingType> = {
     [Edict.HarvestEdict]: BuildingType.Windmill,
-    [Edict.LumberEdict]: BuildingType.Windmill,
+    [Edict.LumberEdict]: BuildingType.Lumber_yard,
     [Edict.SettleEdict]: BuildingType.Houses,
 };

@@ -1,6 +1,5 @@
 import { Building, GameNode, GameRoomState } from "./schema/GameRoomState.js";
-import { BuildingDef, BUILDING_DEFS, EDICT_BUILDINGS } from "../../../shared/BuildingDefs.js";
-import { BuildingType } from "../../../shared/Buildings.js";
+import { BuildingDef, BUILDING_DEFS, EDICT_BUILDINGS, BuildingType } from "../../../shared/BuildingDefs.js";
 import { spawnUnit } from "./UnitFactory.js";
 import { Edict } from "../../../shared/Edicts.js";
 import { placeBuilding } from "./BuildingFactory.js";
@@ -57,6 +56,7 @@ function handleDefense(b: Building, def: BuildingDef, node: GameNode, state: Gam
 function handleEdict(node: GameNode, nodeId: string, state: GameRoomState) {
     const buildingType = EDICT_BUILDINGS[node.edict as Edict];
     if (!buildingType) return;
+    if (node.buildings.has(buildingType)) return;
 
     placeBuilding(node, buildingType, node.ownerId);
     console.log(`Built ${buildingType} on ${nodeId} from edict "${node.edict}"`);

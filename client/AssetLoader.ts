@@ -23,6 +23,13 @@ export const BUILDING_FRAMES: Partial<Record<string, number>> = {
     windmill: 2,
 };
 
+export const BUILDING_COLOR: Partial<Record<string, number>> = {
+    base:        0xaaaaaa,
+    windmill:    0xf5c518,
+    houses:      0x55cc55,
+    lumber_yard: 0xa0522d,
+};
+
 export const EDICT_SPRITE: Record<Edict, string> = {
     [Edict.HarvestEdict]: "wheat",
     [Edict.LumberEdict]:  "wood",
@@ -35,5 +42,6 @@ export async function LoadAssets()
     Assets.add({ alias: 'windmill', src: '/sprites/buildings/windmill.png' });
     Assets.add({ alias: 'wheat', src: '/sprites/edicts/wheat.png' });
     Assets.add({ alias: 'wood', src: '/sprites/edicts/wood.png' });
-    await Assets.load(['base', 'wheat','wood','windmill']);
+    Assets.add({ alias: 'lumber_yard', src: '/sprites/buildings/lumber.png' });
+    await Assets.load(['base', 'wheat','wood','windmill','lumber_yard']);
 }

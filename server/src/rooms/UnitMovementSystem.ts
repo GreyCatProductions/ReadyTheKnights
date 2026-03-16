@@ -1,5 +1,6 @@
 import { GameRoomState } from "./schema/GameRoomState.js";
-import { CELL_SIZE } from "../../../shared/Constants.js";
+import { CELL_SIZE, worldToGrid } from "../../../shared/Constants.js";
+import { tryAssignWorker, unassignWorker } from "./WorkerSystem.js";
 
 const SPEED = 40; // pixels per second
 const ARRIVAL_THRESHOLD = 4;
@@ -7,8 +8,9 @@ const MIN_WAIT_MS = 1000;
 const MAX_WAIT_MS = 5000;
 
 type Target = { x: number; y: number };
-const targets   = new Map<string, Target>();
-const waitUntil = new Map<string, number>();
+const targets        = new Map<string, Target>();
+const waitUntil      = new Map<string, number>();
+const lastPhysNodeId = new Map<string, string>();
 
 function randomPointOnNode(col: number, row: number): Target {
     const margin = 16;
@@ -47,10 +49,30 @@ export function tickUnitMovement(state: GameRoomState, deltaMs: number) {
 
         unit.posX += (dx / dist) * SPEED * dt;
         unit.posY += (dy / dist) * SPEED * dt;
+
+        // Detect node crossing
+        const { col, row } = worldToGrid(unit.posX, unit.posY);
+        const physNodeId = `${col},${row}`;
+        const prevPhysNodeId = lastPhysNodeId.get(id);
+        if (physNodeId !== prevPhysNodeId) {
+            lastPhysNodeId.set(id, physNodeId);
+            if (prevPhysNodeId !== undefined) {
+                unassignWorker(state, id);
+                // Find nodeId for the new physical position
+                for (const [nid, n] of state.map.nodes) {
+                    if (n.column === col && n.row === row) {
+                        tryAssignWorker(state, id, nid);
+                        break;
+                    }
+                }
+            }
+        }
     });
 }
 
-export function removeUnitTarget(id: string) {
+export function removeUnitTarget(id: string, state?: GameRoomState) {
     targets.delete(id);
     waitUntil.delete(id);
+    lastPhysNodeId.delete(id);
+    if (state) unassignWorker(state, id);
 }
