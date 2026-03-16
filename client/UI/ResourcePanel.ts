@@ -3,6 +3,7 @@ import { Building, Player } from "../../server/src/rooms/schema/GameRoomState";
 const RESOURCES: { key: keyof Player; label: string; icon: string }[] = [
     { key: "population", label: "Population", icon: "⚔" },
     { key: "wood",     label: "Wood",     icon: "🪵" },
+    { key: "food", label: "Food", icon: "🌾"},
 ];
 
 const panel = document.getElementById("resource-panel")!;

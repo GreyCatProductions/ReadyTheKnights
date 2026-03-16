@@ -4,6 +4,7 @@ export class Player extends Schema
 {
   @type("number") population: number = 0;
   @type("number") wood: number = 0;
+  @type("number") food: number = 0;
 }
 
 export class NodeStats extends Schema

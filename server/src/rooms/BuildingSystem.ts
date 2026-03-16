@@ -47,6 +47,7 @@ function handleResource(b: Building, def: BuildingDef, node: GameNode, state: Ga
     if (!player) return;
     const produced = b.workerCount * def.resourcePerWorker;
     if (def.resourceType === "wood") player.wood += produced;
+    if (def.resourceType === "food") player.food += produced;
 }
 
 function handleDefense(b: Building, def: BuildingDef, node: GameNode, state: GameRoomState) {
