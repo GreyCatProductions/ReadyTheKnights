@@ -52,13 +52,15 @@ export class GameRoom extends Room {
       const rowDiff = Math.abs(toNode.row    - fromNode.row);
       if (colDiff + rowDiff !== 1) return;
 
-      const candidates: string[] = [];
+      const unassigned: string[] = [];
+      const assigned: string[] = [];
       this.state.units.forEach((unit, id) => {
         if (unit.ownerId !== client.sessionId) return;
         const { col, row } = worldToGrid(unit.posX, unit.posY);
-        if (col === fromNode.column && row === fromNode.row)
-          candidates.push(id);
+        if (col !== fromNode.column || row !== fromNode.row) return;
+        (unit.assignedBuilding ? assigned : unassigned).push(id);
       });
+      const candidates = [...unassigned, ...assigned];
 
       if(candidates.length === 0) return;
 
