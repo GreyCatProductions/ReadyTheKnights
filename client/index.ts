@@ -55,10 +55,21 @@ const app = new Application();
         const refresh = (id: string, node: GameNode) =>
             refreshNode(id, node, room.sessionId, unitCountAt(node.column, node.row));
 
-        const refreshAtGrid = (col: number, row: number) =>
+        const dirtyNodes = new Set<string>();
+
+        const markDirtyAtGrid = (col: number, row: number) =>
             state.map.nodes.forEach((node, id) => {
-                if (node.column === col && node.row === row) refresh(id, node);
+                if (node.column === col && node.row === row) dirtyNodes.add(id);
             });
+
+        app.ticker.add(() => {
+            if (dirtyNodes.size === 0) return;
+            dirtyNodes.forEach(id => {
+                const node = state.map.nodes.get(id);
+                if (node) refresh(id, node);
+            });
+            dirtyNodes.clear();
+        });
 
         callbacks.onAdd(state.map, "nodes", (node, id) => {
             refresh(id, node);
@@ -75,10 +86,10 @@ const app = new Application();
             callbacks.onChange(unit, () => {
                 const curr = worldToGrid(unit.posX, unit.posY);
                 if (curr.col !== prev.col || curr.row !== prev.row) {
-                    refreshAtGrid(prev.col, prev.row);
+                    markDirtyAtGrid(prev.col, prev.row);
                     prev = curr;
                 }
-                refreshAtGrid(curr.col, curr.row);
+                markDirtyAtGrid(curr.col, curr.row);
             });
         });
 
