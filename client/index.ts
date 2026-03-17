@@ -7,7 +7,7 @@ import { CELL_SIZE, worldToGrid } from "../shared/Constants";
 import { setupUnitRenderer } from "./Rendering/UnitRenderer";
 import { setupTroopMoveOverlay } from "./Rendering/TroopMoveOverlay";
 import { setupHUD } from "./UI/HUD";
-import { setupCardHand as setupOrders } from "./UI/CardHand";
+import { setupCardHand as setupEdicts } from "./UI/CardHand";
 import { setupCamera } from "./Camera";
 import { LoadAssets } from "./AssetLoader";
 import { Edict } from "../shared/Edicts";
@@ -43,19 +43,22 @@ const app = new Application();
 
         const callbacks = Callbacks.get(room);
 
-        const unitCountOnNode = (nodeId: string) => {
-            const node = state.map.nodes.get(nodeId);
-            if (!node) return 0;
-            let count = 0;
+        const unitCountAt = (col: number, row: number) => {
+            let n = 0;
             state.units.forEach(u => {
-                const { col, row } = worldToGrid(u.posX, u.posY);
-                if (col === node.column && row === node.row) count++;
+                const g = worldToGrid(u.posX, u.posY);
+                if (g.col === col && g.row === row) n++;
             });
-            return count;
+            return n;
         };
 
         const refresh = (id: string, node: GameNode) =>
-            refreshNode(id, node, room.sessionId, unitCountOnNode(id));
+            refreshNode(id, node, room.sessionId, unitCountAt(node.column, node.row));
+
+        const refreshAtGrid = (col: number, row: number) =>
+            state.map.nodes.forEach((node, id) => {
+                if (node.column === col && node.row === row) refresh(id, node);
+            });
 
         callbacks.onAdd(state.map, "nodes", (node, id) => {
             refresh(id, node);
@@ -67,23 +70,15 @@ const app = new Application();
             callbacks.onRemove(node, "buildings", () => refresh(id, node));
         });
 
-        const refreshNodeAtGrid = (col: number, row: number) => {
-            state.map.nodes.forEach((node, id) => {
-                if (node.column === col && node.row === row) refresh(id, node);
-            });
-        };
-
         callbacks.onAdd(state, "units", (unit) => {
-            let prevCol = Math.floor(unit.posX / CELL_SIZE);
-            let prevRow = Math.floor(unit.posY / CELL_SIZE);
+            let prev = worldToGrid(unit.posX, unit.posY);
             callbacks.onChange(unit, () => {
-                const { col, row } = worldToGrid(unit.posX, unit.posY);
-                if (col !== prevCol || row !== prevRow) {
-                    refreshNodeAtGrid(prevCol, prevRow);
-                    prevCol = col;
-                    prevRow = row;
+                const curr = worldToGrid(unit.posX, unit.posY);
+                if (curr.col !== prev.col || curr.row !== prev.row) {
+                    refreshAtGrid(prev.col, prev.row);
+                    prev = curr;
                 }
-                refreshNodeAtGrid(col, row);
+                refreshAtGrid(curr.col, curr.row);
             });
         });
 
@@ -91,7 +86,7 @@ const app = new Application();
     });
 
     setupHUD(app, room);
-    setupOrders(app, [
+    setupEdicts(app, [
         { edict: Edict.HarvestEdict },
         { edict: Edict.LumberEdict },
         { edict: Edict.SettleEdict },
