@@ -11,6 +11,7 @@ export const BuildingType = {
 
 export type BuildingDef = {
     category: "spawn" | "resource" | "defense";
+    daysToBuild: number;
     spawnPerDay?: number;
     resourceType?: "wood" | "food" | null;
     resourcePerWorker?: number | null;
@@ -20,10 +21,10 @@ export type BuildingDef = {
 
 export const BUILDING_DEFS: Record<BuildingType, BuildingDef> =
 {
-    [BuildingType.Base]: { category: "spawn", spawnPerDay: 1, resourceType: null, populationMaxIncrease: 10, resourcePerWorker: null },
-    [BuildingType.Windmill]: { category: "resource", resourceType: "food", resourcePerWorker: 1, maxWorkers: 3 },
-    [BuildingType.Houses]: { category: "spawn", spawnPerDay: 1, resourceType: null, populationMaxIncrease: 5, resourcePerWorker: null },
-    [BuildingType.Lumber_yard]: { category: "resource", resourceType: "wood", resourcePerWorker: 1, maxWorkers: 2 },
+    [BuildingType.Base]: { category: "spawn", daysToBuild: 0, spawnPerDay: 1, resourceType: null, populationMaxIncrease: 10, resourcePerWorker: null },
+    [BuildingType.Windmill]: { category: "resource", daysToBuild: 3, resourceType: "food", resourcePerWorker: 1, maxWorkers: 3 },
+    [BuildingType.Houses]: { category: "spawn", daysToBuild: 3, spawnPerDay: 1, resourceType: null, populationMaxIncrease: 5, resourcePerWorker: null },
+    [BuildingType.Lumber_yard]: { category: "resource", daysToBuild: 3, resourceType: "wood", resourcePerWorker: 1, maxWorkers: 2 },
 };
 
 export const EDICT_BUILDINGS: Record<Edict, BuildingType> = {

@@ -5,7 +5,7 @@ import { showContextMenu } from "../UI/ContextMenu";
 import { NODE_RESOURCES } from "../UI/SpriteKeyMap";
 import { CELL_SIZE } from "../../shared/Constants.js";
 import { TroopMoveOverlay } from "./TroopMoveOverlay";
-import { BUILDING_COLOR, BUILDING_FRAMES, EDICT_SPRITE, makeAnimatedSprite } from "../AssetLoader.js";
+import { BUILDING_COLOR, BUILDING_FRAMES, CONSTRUCTION_SPRITES, EDICT_SPRITE, makeAnimatedSprite } from "../AssetLoader.js";
 import { BUILDING_DEFS, BuildingType } from "../../shared/BuildingDefs.js";
 
 
@@ -19,7 +19,7 @@ export class NodeSprite extends Container {
     private buildingLayer: Container;
     private captureBar: Graphics;
     private edictIcon: Sprite;
-    private workerLabel: Container;
+    private workerLabel: Container = new Container();
 
     constructor(
         node: GameNode,
@@ -114,10 +114,19 @@ export class NodeSprite extends Container {
     updateBuildings(buildings: MapSchema<Building>) {
         this.buildingLayer.removeChildren();
         buildings.forEach((building) => {
-            const frameCount = BUILDING_FRAMES[building.type];
+            let alias: string;
+            if (building.constructionDaysLeft > 0) {
+                const stages = CONSTRUCTION_SPRITES[building.type];
+                const idx = stages ? stages.length - building.constructionDaysLeft : -1;
+                alias = (stages && idx >= 0) ? stages[idx]! : building.type;
+            } else {
+                alias = building.type;
+            }
+
+            const frameCount = BUILDING_FRAMES[alias];
             const sprite = frameCount
-                ? makeAnimatedSprite(building.type, frameCount)
-                : new Sprite(Texture.from(building.type));
+                ? makeAnimatedSprite(alias, frameCount)
+                : new Sprite(Texture.from(alias));
             sprite.x = building.posX;
             sprite.y = building.posY;
             (sprite as Sprite).anchor.set(0.5);
@@ -125,16 +134,24 @@ export class NodeSprite extends Container {
         });
     }
 
-    updateWorkerLabel(buildings: MapSchema<Building>) {
+    Color = 0xffffff
+    updateWorkerLabel(buildings: MapSchema<Building>, unitCount: number = 0) {
         this.workerLabel.removeChildren();
         let row = 0;
+
+        if (unitCount > 0) {
+            const t = new Text({ text: `${unitCount}`, style: { fill: this.Color, fontSize: 11 } });
+            t.y = row * 14;
+            this.workerLabel.addChild(t);
+            row++;
+        }
+
         buildings.forEach((building) => {
             const def = BUILDING_DEFS[building.type as BuildingType];
             if (!def?.maxWorkers) return;
-            const color = BUILDING_COLOR[building.type] ?? 0xffffff;
             const t = new Text({
                 text: `${building.workerCount}/${def.maxWorkers}`,
-                style: { fill: color, fontSize: 11 },
+                style: { fill: this.Color, fontSize: 11 },
             });
             t.y = row * 14;
             this.workerLabel.addChild(t);

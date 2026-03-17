@@ -30,7 +30,7 @@ export function renderMap(map: GameMap, world: Container, sessionId: string, ove
     };
 }
 
-export function refreshNode(id: string, node: GameNode, sessionId: string) {
+export function refreshNode(id: string, node: GameNode, sessionId: string, unitCount: number = 0) {
     const sprite = nodeSprites.get(id);
     if (!sprite) return;
     const color = node.ownerId === sessionId ? 0x2255cc
@@ -40,4 +40,5 @@ export function refreshNode(id: string, node: GameNode, sessionId: string) {
     sprite.updateBuildings(node.buildings);
     sprite.updateCaptureBar(node.captureProgress, node.contestedBy, sessionId);
     sprite.updateEdict(node.edict);
+    sprite.updateWorkerLabel(node.buildings, unitCount);
 }

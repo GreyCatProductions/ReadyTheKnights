@@ -1,6 +1,6 @@
 import { Client } from "@colyseus/sdk";
 import { Application, Container } from "pixi.js";
-import { GameRoomState } from "../server/src/rooms/schema/GameRoomState";
+import { GameNode, GameRoomState } from "../server/src/rooms/schema/GameRoomState";
 import { Callbacks } from "@colyseus/schema";
 import { renderMap, refreshNode, nodeSprites } from "./Rendering/MapRenderer";
 import { CELL_SIZE, worldToGrid } from "../shared/Constants";
@@ -43,14 +43,48 @@ const app = new Application();
 
         const callbacks = Callbacks.get(room);
 
-        callbacks.onAdd(state.map, "nodes", (node, id) => {
-            refreshNode(id, node, room.sessionId);
-            callbacks.onChange(node, () => refreshNode(id, node, room.sessionId));
-            callbacks.onAdd(node, "buildings", (building) => {
-                refreshNode(id, node, room.sessionId);
-                callbacks.onChange(building, () => nodeSprites.get(id)?.updateWorkerLabel(node.buildings));
+        const unitCountOnNode = (nodeId: string) => {
+            const node = state.map.nodes.get(nodeId);
+            if (!node) return 0;
+            let count = 0;
+            state.units.forEach(u => {
+                const { col, row } = worldToGrid(u.posX, u.posY);
+                if (col === node.column && row === node.row) count++;
             });
-            callbacks.onRemove(node, "buildings", () => refreshNode(id, node, room.sessionId));
+            return count;
+        };
+
+        const refresh = (id: string, node: GameNode) =>
+            refreshNode(id, node, room.sessionId, unitCountOnNode(id));
+
+        callbacks.onAdd(state.map, "nodes", (node, id) => {
+            refresh(id, node);
+            callbacks.onChange(node, () => refresh(id, node));
+            callbacks.onAdd(node, "buildings", (building) => {
+                refresh(id, node);
+                callbacks.onChange(building, () => refresh(id, node));
+            });
+            callbacks.onRemove(node, "buildings", () => refresh(id, node));
+        });
+
+        const refreshNodeAtGrid = (col: number, row: number) => {
+            state.map.nodes.forEach((node, id) => {
+                if (node.column === col && node.row === row) refresh(id, node);
+            });
+        };
+
+        callbacks.onAdd(state, "units", (unit) => {
+            let prevCol = Math.floor(unit.posX / CELL_SIZE);
+            let prevRow = Math.floor(unit.posY / CELL_SIZE);
+            callbacks.onChange(unit, () => {
+                const { col, row } = worldToGrid(unit.posX, unit.posY);
+                if (col !== prevCol || row !== prevRow) {
+                    refreshNodeAtGrid(prevCol, prevRow);
+                    prevCol = col;
+                    prevRow = row;
+                }
+                refreshNodeAtGrid(col, row);
+            });
         });
 
         setupUnitRenderer(app, state, unitLayer, callbacks);

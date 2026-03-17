@@ -11,6 +11,8 @@ export function tickNodes(state: GameRoomState) {
             const def = BUILDING_DEFS[building.type as BuildingType];
             if (!def) return;
 
+            if (building.constructionDaysLeft > 0) { building.constructionDaysLeft--; return; }
+
             if (def.category === "spawn")    handleSpawn(building, def, node, nodeId, state);
             if (def.category === "resource") handleResource(building, def, node, state);
             if (def.category === "defense")  handleDefense(building, def, node, state);

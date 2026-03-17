@@ -13,6 +13,7 @@ export function createBuilding(type: BuildingType, ownerId: string): Building {
     b.posX    = CELL_SIZE / 2;
     b.posY    = CELL_SIZE / 2;
     b.populationMaxIncrease = def.populationMaxIncrease ?? 0;
+    b.constructionDaysLeft = def.daysToBuild ?? 0;
     return b;
 }
 

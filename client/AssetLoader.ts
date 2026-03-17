@@ -36,12 +36,19 @@ export const EDICT_SPRITE: Record<Edict, string> = {
     [Edict.SettleEdict]:  "wheat",
 };
 
+export const CONSTRUCTION_SPRITES: Partial<Record<string, string[]>> = {
+    lumber_yard: ['lumber1', 'lumber2', 'lumber3'],
+};
+
 export async function LoadAssets()
 {
-    Assets.add({ alias: 'base', src: '/sprites/buildings/base.png' });
-    Assets.add({ alias: 'windmill', src: '/sprites/buildings/windmill.png' });
-    Assets.add({ alias: 'wheat', src: '/sprites/edicts/wheat.png' });
-    Assets.add({ alias: 'wood', src: '/sprites/edicts/wood.png' });
-    Assets.add({ alias: 'lumber_yard', src: '/sprites/buildings/lumber.png' });
-    await Assets.load(['base', 'wheat','wood','windmill','lumber_yard']);
+    Assets.add({ alias: 'base',       src: '/sprites/buildings/base.png' });
+    Assets.add({ alias: 'windmill',   src: '/sprites/buildings/windmill.png' });
+    Assets.add({ alias: 'wheat',      src: '/sprites/edicts/wheat.png' });
+    Assets.add({ alias: 'wood',       src: '/sprites/edicts/wood.png' });
+    Assets.add({ alias: 'lumber_yard',src: '/sprites/buildings/lumber/lumber.png' });
+    Assets.add({ alias: 'lumber1',   src: '/sprites/buildings/lumber/lumber1.png' });
+    Assets.add({ alias: 'lumber2',   src: '/sprites/buildings/lumber/lumber2.png' });
+    Assets.add({ alias: 'lumber3',   src: '/sprites/buildings/lumber/lumber3.png' });
+    await Assets.load(['base', 'wheat', 'wood', 'windmill', 'lumber_yard', 'lumber1', 'lumber2', 'lumber3']);
 }
