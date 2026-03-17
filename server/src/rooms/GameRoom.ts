@@ -10,7 +10,7 @@ import path from "node:path";
 import { createMap } from "./MapGeneration/MapGenerator.js";
 import { worldToGrid } from "../../../shared/Constants.js"
 import { spawnUnit } from "./UnitFactory.js";
-import { EDICT_BUILDINGS } from "../../../shared/BuildingDefs.js";
+import { EDICT_BUILDINGS, BuildingType } from "../../../shared/BuildingDefs.js";
 import { Edict } from "../../../shared/Edicts.js";
 
 const UNITS_AT_START = 5;
@@ -85,16 +85,26 @@ export class GameRoom extends Room {
           this.state.units.forEach((unit, unitId) => {
             if (unit.assignedBuilding === buildingType) unassignWorker(this.state, unitId);
           });
-          node.buildings.delete(buildingType);
         }
         node.edict = "";
         return;
       }
       
-      if (node.edict) return; // already has one, reject
+      if (node.edict) return;
 
       const buildingType = EDICT_BUILDINGS[edict];
       if (!buildingType) return;
+
+      // Destroy any buildings that don't belong to the new edict
+      const edictBuildingTypes = new Set(Object.values(EDICT_BUILDINGS));
+      node.buildings.forEach((_, key) => {
+        if (edictBuildingTypes.has(key as BuildingType) && key !== buildingType) {
+          this.state.units.forEach((unit, unitId) => {
+            if (unit.assignedBuilding === key) unassignWorker(this.state, unitId);
+          });
+          node.buildings.delete(key);
+        }
+      });
 
       node.edict = edict;
       console.log(`${client.sessionId} issued "${edict}" on ${nodeId}`);

@@ -12,6 +12,8 @@ export function tickNodes(state: GameRoomState) {
             const def = BUILDING_DEFS[building.type as BuildingType];
             if (!def) return;
 
+            if (!node.edict) return;
+            
             if (building.constructionDaysLeft > 0) {
                 building.constructionDaysLeft--;
                 if (building.constructionDaysLeft === 0) {
