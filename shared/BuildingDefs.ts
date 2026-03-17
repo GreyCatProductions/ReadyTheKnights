@@ -27,8 +27,9 @@ export const BUILDING_DEFS: Record<BuildingType, BuildingDef> =
     [BuildingType.Lumber_yard]: { category: "resource", daysToBuild: 3, resourceType: "wood", resourcePerWorker: 1, maxWorkers: 2 },
 };
 
-export const EDICT_BUILDINGS: Record<Edict, BuildingType> = {
+export const EDICT_BUILDINGS: Record<Edict, BuildingType | null> = {
     [Edict.HarvestEdict]: BuildingType.Windmill,
     [Edict.LumberEdict]: BuildingType.Lumber_yard,
     [Edict.SettleEdict]: BuildingType.Houses,
+    [Edict.ClearEdict]: null,
 };

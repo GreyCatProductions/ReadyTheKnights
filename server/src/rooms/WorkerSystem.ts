@@ -9,6 +9,7 @@ export function tryAssignWorker(state: GameRoomState, unitId: string, nodeId: st
     for (const [buildingKey, building] of node.buildings) {
         const def = BUILDING_DEFS[building.type as BuildingType];
         if (!def?.maxWorkers) continue;
+        if (building.constructionDaysLeft > 0) continue;
         if (building.workerCount < (def.maxWorkers as number)) {
             building.workerCount++;
             unit.assignedBuilding = buildingKey;

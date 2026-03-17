@@ -4,6 +4,7 @@ import { placeBuilding } from "./BuildingFactory.js";
 import { loadMapJSON } from "../../../shared/MapCreation/MapTranslator.js";
 import { tickNodes } from "./BuildingSystem.js";
 import { tickUnitMovement, removeUnitTarget } from "./UnitMovementSystem.js";
+import { unassignWorker } from "./WorkerSystem.js";
 import { tickBattles } from "./BattleSystem.js";
 import path from "node:path";
 import { createMap } from "./MapGeneration/MapGenerator.js";
@@ -77,6 +78,20 @@ export class GameRoom extends Room {
     this.onMessage("edict", (client, { nodeId, edict }: { nodeId: string, edict: Edict }) => {
       const node = this.state.map.nodes.get(nodeId);
       if (!node || node.ownerId !== client.sessionId) return;
+
+      if (edict === Edict.ClearEdict) {
+        const buildingType = EDICT_BUILDINGS[node.edict as Edict];
+        if (buildingType && node.buildings.has(buildingType)) {
+          this.state.units.forEach((unit, unitId) => {
+            if (unit.assignedBuilding === buildingType) unassignWorker(this.state, unitId);
+          });
+          node.buildings.delete(buildingType);
+        }
+        node.edict = "";
+        return;
+      }
+      
+      if (node.edict) return; // already has one, reject
 
       const buildingType = EDICT_BUILDINGS[edict];
       if (!buildingType) return;
