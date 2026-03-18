@@ -38,18 +38,27 @@ export const EDICT_SPRITE: Record<Edict, string> = {
 };
 
 export const CONSTRUCTION_SPRITES: Partial<Record<string, string[]>> = {
-    lumber_yard: ['lumber1', 'lumber2', 'lumber3'],
+    lumber_yard: ['lumber_construction1', 'lumber_construction2', 'lumber_construction3'],
+};
+
+const SPRITE_MANIFEST: Record<string, string> = {
+    base:                 '/sprites/buildings/base.png',
+    windmill:             '/sprites/buildings/windmill.png',
+    lumber_yard:          '/sprites/buildings/lumber/construction/lumber_construction3.png',
+    lumber_construction1: '/sprites/buildings/lumber/construction/lumber_construction1.png',
+    lumber_construction2: '/sprites/buildings/lumber/construction/lumber_construction2.png',
+    lumber_construction3: '/sprites/buildings/lumber/construction/lumber_construction3.png',
+    lumber_evolution1:    '/sprites/buildings/lumber/evolution1/lumber_evolution1.png',
+    lumber_evolution2:    '/sprites/buildings/lumber/evolution2/lumber_evolution2.png',
+
+    wheat:  '/sprites/edicts/wheat.png',
+    wood:   '/sprites/edicts/wood.png',
+    clear:  '/sprites/edicts/clear.png',
 };
 
 export async function LoadAssets() {
-    Assets.add({ alias: 'base', src: '/sprites/buildings/base.png' });
-    Assets.add({ alias: 'windmill', src: '/sprites/buildings/windmill.png' });
-    Assets.add({ alias: 'wheat', src: '/sprites/edicts/wheat.png' });
-    Assets.add({ alias: 'wood', src: '/sprites/edicts/wood.png' });
-    Assets.add({ alias: 'lumber_yard', src: '/sprites/buildings/lumber/lumber.png' });
-    Assets.add({ alias: 'lumber1', src: '/sprites/buildings/lumber/lumber1.png' });
-    Assets.add({ alias: 'lumber2', src: '/sprites/buildings/lumber/lumber2.png' });
-    Assets.add({ alias: 'lumber3', src: '/sprites/buildings/lumber/lumber3.png' });
-    Assets.add({ alias: 'clear', src: '/sprites/edicts/clear.png' });
-    await Assets.load(['base', 'wheat', 'wood', 'clear', 'windmill', 'lumber_yard', 'lumber1', 'lumber2', 'lumber3']);
+    for (const [alias, src] of Object.entries(SPRITE_MANIFEST)) {
+        Assets.add({ alias, src });
+    }
+    await Assets.load(Object.keys(SPRITE_MANIFEST));
 }

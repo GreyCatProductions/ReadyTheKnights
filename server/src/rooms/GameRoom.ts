@@ -96,9 +96,8 @@ export class GameRoom extends Room {
       if (!buildingType) return;
 
       // Destroy any buildings that don't belong to the new edict
-      const edictBuildingTypes = new Set(Object.values(EDICT_BUILDINGS));
       node.buildings.forEach((_, key) => {
-        if (edictBuildingTypes.has(key as BuildingType) && key !== buildingType) {
+        if (key !== buildingType) {
           this.state.units.forEach((unit, unitId) => {
             if (unit.assignedBuilding === key) unassignWorker(this.state, unitId);
           });

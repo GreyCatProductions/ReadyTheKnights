@@ -21,6 +21,7 @@ export class Building extends Schema {
   @type("number") workerCount: number = 0;
   @type("number") populationMaxIncrease: number = 0;
   @type("number") constructionDaysLeft: number = 0;
+  @type("number") daysActive: number = 0;
 }
 
 export class GameNode extends Schema
@@ -51,6 +52,8 @@ export class Unit extends Schema {
   @type("number") hp: number = 100;
   @type("number") damage: number = 5;
 }
+
+
 
 export class GameRoomState extends Schema {
 
