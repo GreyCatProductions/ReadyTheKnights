@@ -12,7 +12,4 @@ export function spawnUnit(state: GameRoomState, ownerId: string, nodeId: string)
     unit.posX    = node.column * CELL_SIZE + CELL_SIZE / 2;
     unit.posY    = node.row    * CELL_SIZE + CELL_SIZE / 2;
     state.units.set(uuid(), unit);
-
-    const player = state.players.get(ownerId);
-    if (player) player.population += 1;
 }

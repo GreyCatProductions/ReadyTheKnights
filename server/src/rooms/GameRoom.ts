@@ -91,6 +91,7 @@ export class GameRoom extends Room {
       }
       
       if (node.edict) return;
+      if (node.buildings.has(BuildingType.Base)) return;
 
       const buildingType = EDICT_BUILDINGS[edict];
       if (!buildingType) return;
