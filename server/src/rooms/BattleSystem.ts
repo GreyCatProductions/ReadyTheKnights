@@ -96,14 +96,32 @@ function tickCapture(state: GameRoomState, unitsByNode: Map<string, Map<string, 
 }
 
 function tickCombat(state: GameRoomState, unitsByNode: Map<string, Map<string, string[]>>, nodeAtPos: Map<string, string>) {
-    unitsByNode.forEach((byOwner, nodeId) => {
+    unitsByNode.forEach((byOwner) => {
         if (byOwner.size <= 1) return;
 
-        // Kill one unit per side simultaneously
-        for (const unitIds of byOwner.values()) {
-            const id = unitIds[unitIds.length - 1];
-            removeUnitTarget(id, state);
-            state.units.delete(id);
+        const sides = [...byOwner.values()];
+
+        // Calculate damage for units
+        const pendingDamage = new Map<string, number>();
+        for (let i = 0; i < sides.length; i++) {
+            const enemies = sides.filter((_, j) => j !== i).flat();
+            for (const attackerId of sides[i]) {
+                const attacker = state.units.get(attackerId);
+                if (!attacker) continue;
+                const target = enemies[Math.floor(Math.random() * enemies.length)];
+                pendingDamage.set(target, (pendingDamage.get(target) ?? 0) + attacker.damage);
+            }
+        }
+
+        // Apply damage and remove dead units
+        for (const [id, dmg] of pendingDamage) {
+            const unit = state.units.get(id);
+            if (!unit) continue;
+            unit.hp -= dmg;
+            if (unit.hp <= 0) {
+                removeUnitTarget(id, state);
+                state.units.delete(id);
+            }
         }
     });
 }
