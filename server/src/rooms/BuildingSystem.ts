@@ -12,18 +12,19 @@ export function tickNodes(state: GameRoomState) {
             const def = BUILDING_DEFS[building.type as BuildingType];
             if (!def) return;
 
-            if (!node.edict) return;
-            
-            if (building.constructionDaysLeft > 0) {
-                building.constructionDaysLeft--;
-                if (building.constructionDaysLeft === 0) {
-                    state.units.forEach((unit, unitId) => {
-                        const { col, row } = worldToGrid(unit.posX, unit.posY);
-                        if (col === node.column && row === node.row)
-                            tryAssignWorker(state, unitId, nodeId);
-                    });
-                }
-                return;
+            if (node.edict)
+            {
+                if (building.constructionDaysLeft > 0) {
+                    building.constructionDaysLeft--;
+                    if (building.constructionDaysLeft === 0) {
+                        state.units.forEach((unit, unitId) => {
+                            const { col, row } = worldToGrid(unit.posX, unit.posY);
+                            if (col === node.column && row === node.row)
+                                tryAssignWorker(state, unitId, nodeId);
+                        });
+                    }
+                    return;
+                }   
             }
 
             if (def.category === "spawn")    handleSpawn(building, def, node, nodeId, state);
@@ -47,12 +48,15 @@ function getMaxPopulation(ownerId: string, state: GameRoomState): number {
 
 function handleSpawn(b: Building, def: BuildingDef, node: GameNode, nodeId: string, state: GameRoomState) {
     if (!def.spawnPerDay) return;
-    const player = state.players.get(node.ownerId);
-    if (!player) return;
+
+    const unitCount = [...state.units.values()].filter(u => u.ownerId === node.ownerId).length;
+    let counter = unitCount;
     const maxPop = getMaxPopulation(node.ownerId, state);
+    
     for (let i = 0; i < def.spawnPerDay; i++) {
-        if (player.population >= maxPop) break;
+        if(maxPop <= counter) return
         spawnUnit(state, node.ownerId, nodeId);
+        counter++;
     }
 }
 

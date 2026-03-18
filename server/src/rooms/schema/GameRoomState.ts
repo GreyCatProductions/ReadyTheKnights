@@ -2,7 +2,6 @@ import { MapSchema, Schema, type } from "@colyseus/schema";
 
 export class Player extends Schema
 {
-  @type("number") population: number = 0;
   @type("number") wood: number = 0;
   @type("number") food: number = 0;
 }
