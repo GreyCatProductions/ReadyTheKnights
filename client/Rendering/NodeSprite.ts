@@ -127,6 +127,7 @@ export class NodeSprite extends Container {
             const sprite = frameCount
                 ? makeAnimatedSprite(alias, frameCount)
                 : new Sprite(Texture.from(alias));
+            if(!sprite) return;
             sprite.x = building.posX;
             sprite.y = building.posY;
             (sprite as Sprite).anchor.set(0.5);

@@ -8,11 +8,11 @@ import { tryAssignWorker } from "./WorkerSystem.js";
 
 // Positions for decorative buildings, relative to node cell center
 const DECO_OFFSETS = [
-    { x: -28, y: -20 },
-    { x:  24, y: -28 },
-    { x:  30, y:  22 },
-    { x: -22, y:  28 },
-    { x:   6, y: -36 },
+    { x:   0, y: -48 },
+    { x:  46, y: -15 },
+    { x:  28, y:  39 },
+    { x: -28, y:  39 },
+    { x: -46, y: -15 },
 ];
 
 export function tickNodes(state: GameRoomState) {
@@ -94,7 +94,6 @@ function handleEvolution(key: string, building: Building, def: BuildingDef, node
 
     building.daysActive++;
 
-    // Place a decorative building at the next offset position
     const decoIndex = building.daysActive - 1;
     if (decoIndex < DECO_OFFSETS.length) {
         const offset = DECO_OFFSETS[decoIndex];
@@ -106,14 +105,11 @@ function handleEvolution(key: string, building: Building, def: BuildingDef, node
         node.buildings.set(`${key}_deco_${decoIndex}`, deco);
     }
 
-    // Evolve once threshold is reached
     if (building.daysActive >= evolution.daysToEvolve) {
-        // Remove all decoratives
         for (let i = 0; i < DECO_OFFSETS.length; i++) {
             node.buildings.delete(`${key}_deco_${i}`);
         }
 
-        // Update building in-place so the map key (= edict type) stays the same
         const evolvedDef = BUILDING_DEFS[evolution.evolvesInto];
         building.type                  = evolution.evolvesInto;
         building.populationMaxIncrease = evolvedDef.populationMaxIncrease ?? 0;

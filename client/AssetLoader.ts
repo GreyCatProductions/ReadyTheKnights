@@ -3,8 +3,10 @@ import { Edict } from "../shared/Edicts.js";
 
 const FRAME_SIZE = 64;
 
-export function makeAnimatedSprite(alias: string, frameCount: number, animationSpeed = 0.01): AnimatedSprite {
+export function makeAnimatedSprite(alias: string, frameCount: number, animationSpeed = 0.01): AnimatedSprite | null {
     const base = Assets.get(alias) as Texture;
+    if(!base) return null;
+
     const frames: Texture[] = [];
     for (let i = 0; i < frameCount; i++) {
         frames.push(new Texture({
@@ -43,12 +45,18 @@ export const CONSTRUCTION_SPRITES: Partial<Record<string, string[]>> = {
 
 const SPRITE_MANIFEST: Record<string, string> = {
     base:                 '/sprites/buildings/base.png',
-    windmill:             '/sprites/buildings/windmill.png',
-    lumber_yard:          '/sprites/buildings/lumber/construction/lumber_construction3.png',
+
+    windmill_construction1: '/sprites/buildings/lumber/construction/lumber_construction1.png',
+    windmill_construction2: '/sprites/buildings/lumber/construction/lumber_construction2.png',
+    windmill_construction3: '/sprites/buildings/lumber/construction/lumber_construction3.png',
+    windmill:       '/sprites/buildings/windmill/evolution1/windmill.png',
+    windmill_deco:  '/sprites/buildings/windmill/evolution1/wheat_field.png',
+
     lumber_construction1: '/sprites/buildings/lumber/construction/lumber_construction1.png',
     lumber_construction2: '/sprites/buildings/lumber/construction/lumber_construction2.png',
     lumber_construction3: '/sprites/buildings/lumber/construction/lumber_construction3.png',
-    lumber_evolution1:    '/sprites/buildings/lumber/evolution1/lumber_evolution1.png',
+    lumber_yard:    '/sprites/buildings/lumber/evolution1/lumber_evolution1.png',
+    lumber_yard_deco:    '/sprites/buildings/lumber/evolution1/lumber_deco1.png',
     lumber_evolution2:    '/sprites/buildings/lumber/evolution2/lumber_evolution2.png',
 
     wheat:  '/sprites/edicts/wheat.png',
