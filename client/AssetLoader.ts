@@ -41,6 +41,7 @@ export const EDICT_SPRITE: Record<Edict, string> = {
 
 export const CONSTRUCTION_SPRITES: Partial<Record<string, string[]>> = {
     lumber_yard: ['lumber_construction1', 'lumber_construction2', 'lumber_construction3'],
+    windmill: ['windmill_construction1', 'windmill_construction2', 'windmill_construction3']
 };
 
 const SPRITE_MANIFEST: Record<string, string> = {
