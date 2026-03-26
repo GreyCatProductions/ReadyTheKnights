@@ -8,9 +8,8 @@ export class Player extends Schema
 
 export class NodeStats extends Schema
 {
-  @type("number") foodPerRound: number = 0;
-  @type("number") menPerRound: number = 0;
-  @type("number") woodPerRound: number = 0;
+  @type("boolean") hasFood: boolean = false;
+  @type("boolean") hasWood: boolean = false;
 }
 
 export class Building extends Schema {

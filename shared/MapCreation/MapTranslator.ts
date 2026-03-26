@@ -6,7 +6,7 @@ export type GameMapJSON = {
         row: number;
         column: number;
         playerSpawnTile: boolean;
-        stats?: { foodPerRound?: number; menPerRound?: number; woodPerRound?: number };
+        stats?: { foodPerRound?: number; woodPerRound?: number; hasFood?: boolean; hasWood?: boolean };
     }>;
 };
 
@@ -29,7 +29,9 @@ function isGameMapJSON(data: any): data is GameMapJSON
         if (typeof node.row    !== "number") return false;
         if (typeof node.column !== "number") return false;
         if (node.stats && typeof node.stats.foodPerRound !== "number" && node.stats.foodPerRound !== undefined) return false;
-        if (node.stats && typeof node.stats.menPerRound  !== "number" && node.stats.menPerRound  !== undefined) return false;
+        if (node.stats && typeof node.stats.woodPerRound !== "number" && node.stats.woodPerRound !== undefined) return false;
+        if (node.stats && typeof node.stats.hasFood !== "boolean" && node.stats.hasFood !== undefined) return false;
+        if (node.stats && typeof node.stats.hasWood !== "boolean" && node.stats.hasWood !== undefined) return false;
     }
 
     return true;

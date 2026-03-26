@@ -8,8 +8,9 @@
       "playerSpawnTile": true,
       "stats": {
         "foodPerRound": 0,
-        "menPerRound": 0,
-        "woodPerRound": 0
+        "woodPerRound": 0,
+        "hasFood": false,
+        "hasWood": false
       }
     },
     "A2": {
@@ -19,8 +20,9 @@
       "playerSpawnTile": false,
       "stats": {
         "foodPerRound": 0,
-        "menPerRound": 0,
-        "woodPerRound": 0
+        "woodPerRound": 0,
+        "hasFood": true,
+        "hasWood": false
       }
     },
     "A3": {
@@ -30,8 +32,9 @@
       "playerSpawnTile": false,
       "stats": {
         "foodPerRound": 0,
-        "menPerRound": 0,
-        "woodPerRound": 0
+        "woodPerRound": 0,
+        "hasFood": false,
+        "hasWood": false
       }
     },
     "A4": {
@@ -41,8 +44,9 @@
       "playerSpawnTile": false,
       "stats": {
         "foodPerRound": 0,
-        "menPerRound": 0,
-        "woodPerRound": 0
+        "woodPerRound": 0,
+        "hasFood": true,
+        "hasWood": false
       }
     },
     "A5": {
@@ -52,8 +56,9 @@
       "playerSpawnTile": true,
       "stats": {
         "foodPerRound": 0,
-        "menPerRound": 0,
-        "woodPerRound": 0
+        "woodPerRound": 0,
+        "hasFood": false,
+        "hasWood": false
       }
     },
     "A6": {
@@ -63,173 +68,201 @@
       "playerSpawnTile": false,
       "stats": {
         "foodPerRound": 0,
-        "menPerRound": 0,
-        "woodPerRound": 0
+        "woodPerRound": 0,
+        "hasFood": false,
+        "hasWood": false
+      }
+    },
+    "A7": {
+      "name": "A7",
+      "row": 1,
+      "column": 1,
+      "playerSpawnTile": false,
+      "stats": {
+        "foodPerRound": 0,
+        "woodPerRound": 0,
+        "hasFood": false,
+        "hasWood": false
       }
     },
     "A8": {
       "name": "A8",
       "row": 1,
-      "column": 2,
+      "column": 3,
       "playerSpawnTile": false,
       "stats": {
         "foodPerRound": 0,
-        "menPerRound": 0,
-        "woodPerRound": 0
+        "woodPerRound": 0,
+        "hasFood": false,
+        "hasWood": false
       }
     },
-    "A10": {
-      "name": "A10",
+    "A9": {
+      "name": "A9",
       "row": 1,
       "column": 4,
       "playerSpawnTile": false,
       "stats": {
         "foodPerRound": 0,
-        "menPerRound": 0,
-        "woodPerRound": 0
+        "woodPerRound": 0,
+        "hasFood": false,
+        "hasWood": false
+      }
+    },
+    "A10": {
+      "name": "A10",
+      "row": 2,
+      "column": 0,
+      "playerSpawnTile": false,
+      "stats": {
+        "foodPerRound": 0,
+        "woodPerRound": 0,
+        "hasFood": false,
+        "hasWood": false
       }
     },
     "A11": {
       "name": "A11",
       "row": 2,
-      "column": 0,
+      "column": 1,
       "playerSpawnTile": false,
       "stats": {
         "foodPerRound": 0,
-        "menPerRound": 0,
-        "woodPerRound": 0
+        "woodPerRound": 0,
+        "hasFood": false,
+        "hasWood": true
       }
     },
     "A12": {
       "name": "A12",
       "row": 2,
-      "column": 1,
+      "column": 3,
       "playerSpawnTile": false,
       "stats": {
         "foodPerRound": 0,
-        "menPerRound": 0,
-        "woodPerRound": 0
+        "woodPerRound": 0,
+        "hasFood": false,
+        "hasWood": true
       }
     },
     "A13": {
       "name": "A13",
       "row": 2,
-      "column": 2,
-      "playerSpawnTile": false,
-      "stats": {
-        "foodPerRound": 0,
-        "menPerRound": 0,
-        "woodPerRound": 0
-      }
-    },
-    "A14": {
-      "name": "A14",
-      "row": 2,
-      "column": 3,
-      "playerSpawnTile": false,
-      "stats": {
-        "foodPerRound": 0,
-        "menPerRound": 0,
-        "woodPerRound": 0
-      }
-    },
-    "A15": {
-      "name": "A15",
-      "row": 2,
       "column": 4,
       "playerSpawnTile": false,
       "stats": {
         "foodPerRound": 0,
-        "menPerRound": 0,
-        "woodPerRound": 0
+        "woodPerRound": 0,
+        "hasFood": false,
+        "hasWood": false
+      }
+    },
+    "A14": {
+      "name": "A14",
+      "row": 3,
+      "column": 0,
+      "playerSpawnTile": false,
+      "stats": {
+        "foodPerRound": 0,
+        "woodPerRound": 0,
+        "hasFood": false,
+        "hasWood": false
+      }
+    },
+    "A15": {
+      "name": "A15",
+      "row": 3,
+      "column": 1,
+      "playerSpawnTile": false,
+      "stats": {
+        "foodPerRound": 0,
+        "woodPerRound": 0,
+        "hasFood": false,
+        "hasWood": false
       }
     },
     "A16": {
       "name": "A16",
       "row": 3,
-      "column": 0,
+      "column": 3,
       "playerSpawnTile": false,
       "stats": {
         "foodPerRound": 0,
-        "menPerRound": 0,
-        "woodPerRound": 0
+        "woodPerRound": 0,
+        "hasFood": false,
+        "hasWood": false
       }
     },
-    "A18": {
-      "name": "A18",
-      "row": 3,
-      "column": 2,
-      "playerSpawnTile": false,
-      "stats": {
-        "foodPerRound": 0,
-        "menPerRound": 0,
-        "woodPerRound": 0
-      }
-    },
-    "A20": {
-      "name": "A20",
+    "A17": {
+      "name": "A17",
       "row": 3,
       "column": 4,
       "playerSpawnTile": false,
       "stats": {
         "foodPerRound": 0,
-        "menPerRound": 0,
-        "woodPerRound": 0
+        "woodPerRound": 0,
+        "hasFood": false,
+        "hasWood": false
       }
     },
-    "A21": {
-      "name": "A21",
+    "A18": {
+      "name": "A18",
       "row": 4,
       "column": 0,
       "playerSpawnTile": true,
       "stats": {
         "foodPerRound": 0,
-        "menPerRound": 0,
-        "woodPerRound": 0
+        "woodPerRound": 0,
+        "hasFood": false,
+        "hasWood": false
       }
     },
-    "A22": {
-      "name": "A22",
+    "A19": {
+      "name": "A19",
       "row": 4,
       "column": 1,
       "playerSpawnTile": false,
       "stats": {
         "foodPerRound": 0,
-        "menPerRound": 0,
-        "woodPerRound": 0
+        "woodPerRound": 0,
+        "hasFood": true,
+        "hasWood": false
       }
     },
-    "A23": {
-      "name": "A23",
+    "A20": {
+      "name": "A20",
       "row": 4,
       "column": 2,
       "playerSpawnTile": false,
       "stats": {
         "foodPerRound": 0,
-        "menPerRound": 0,
-        "woodPerRound": 0
+        "woodPerRound": 0,
+        "hasFood": false,
+        "hasWood": false
       }
     },
-    "A24": {
-      "name": "A24",
+    "A21": {
+      "name": "A21",
       "row": 4,
       "column": 3,
       "playerSpawnTile": false,
       "stats": {
         "foodPerRound": 0,
-        "menPerRound": 0,
-        "woodPerRound": 0
+        "woodPerRound": 0,
+        "hasFood": true,
+        "hasWood": false
       }
     },
-    "A25": {
-      "name": "A25",
+    "A22": {
+      "name": "A22",
       "row": 4,
       "column": 4,
       "playerSpawnTile": true,
       "stats": {
         "foodPerRound": 0,
-        "menPerRound": 0,
-        "woodPerRound": 0
+        "woodPerRound": 0,
+        "hasFood": false,
+        "hasWood": false
       }
     }
   }

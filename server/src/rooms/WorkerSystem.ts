@@ -1,5 +1,6 @@
 import { GameRoomState } from "./schema/GameRoomState.js";
-import { BUILDING_DEFS, BuildingType } from "../../../shared/BuildingDefs.js";
+import { BUILDING_DEFS } from "../../../shared/BuildingDefs.js";
+import { BuildingType } from "../../../shared/Buildings.js";
 
 export function tryAssignWorker(state: GameRoomState, unitId: string, nodeId: string) {
     const unit = state.units.get(unitId);

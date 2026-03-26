@@ -1,5 +1,6 @@
 import { Building, GameNode, GameRoomState } from "./schema/GameRoomState.js";
-import { BUILDING_DEFS, BuildingType } from "../../../shared/BuildingDefs.js";
+import { BUILDING_DEFS } from "../../../shared/BuildingDefs.js";
+import { BuildingType } from "../../../shared/Buildings.js";
 import { CELL_SIZE, worldToGrid } from "../../../shared/Constants.js";
 import { tryAssignWorker } from "./WorkerSystem.js";
 

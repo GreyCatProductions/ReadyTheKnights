@@ -1,7 +1,8 @@
 import { Building, GameNode, GameRoomState } from "./schema/GameRoomState.js";
-import { BuildingDef, BUILDING_DEFS, EDICT_BUILDINGS, BuildingType } from "../../../shared/BuildingDefs.js";
+import { BuildingDef, BUILDING_DEFS } from "../../../shared/BuildingDefs.js";
+import { BuildingType } from "../../../shared/Buildings.js";
 import { spawnUnit } from "./UnitFactory.js";
-import { Edict } from "../../../shared/Edicts.js";
+import { Edict, EDICT_BUILDINGS } from "../../../shared/Edicts.js";
 import { placeBuilding } from "./BuildingFactory.js";
 import { worldToGrid, CELL_SIZE } from "../../../shared/Constants.js";
 import { tryAssignWorker } from "./WorkerSystem.js";
@@ -21,7 +22,7 @@ export function tickNodes(state: GameRoomState) {
 
         node.buildings.forEach((building, key) => {
             const def = BUILDING_DEFS[building.type as BuildingType];
-            if (!def || def.category === "decorative") return;
+            if (!def || (!def.spawnPerDay && !def.resourceType && !def.evolution)) return;
 
             if (node.edict) {
                 if (building.constructionDaysLeft > 0) {
@@ -37,9 +38,8 @@ export function tickNodes(state: GameRoomState) {
                 }
             }
 
-            if (def.category === "spawn")    handleSpawn(building, def, node, nodeId, state);
-            if (def.category === "resource") handleResource(building, def, node, state);
-            if (def.category === "defense")  handleDefense(building, def, node, state);
+            if (def.spawnPerDay)  handleSpawn(building, def, node, nodeId, state);
+            if (def.resourceType) handleResource(building, def, node, state);
             if (def.evolution)               evolutionQueue.push({ key, building, def });
         });
 
@@ -84,9 +84,6 @@ function handleResource(b: Building, def: BuildingDef, node: GameNode, state: Ga
     if (def.resourceType === "food") player.food += produced;
 }
 
-function handleDefense(b: Building, def: BuildingDef, node: GameNode, state: GameRoomState) {
-    // TODO: combat resolution
-}
 
 function handleEvolution(key: string, building: Building, def: BuildingDef, node: GameNode) {
     const { evolution } = def;

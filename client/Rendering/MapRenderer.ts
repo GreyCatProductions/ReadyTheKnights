@@ -18,6 +18,7 @@ export function renderMap(map: GameMap, world: Container, sessionId: string, ove
         maxRow = Math.max(maxRow, node.row);
 
         const sprite = new NodeSprite(node, id, sessionId, overlay);
+        sprite.updateStats(node.stats);
         nodeSprites.set(id, sprite);
         world.addChild(sprite);
     });

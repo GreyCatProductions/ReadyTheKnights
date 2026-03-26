@@ -10,7 +10,8 @@ import path from "node:path";
 import { createMap } from "./MapGeneration/MapGenerator.js";
 import { worldToGrid } from "../../../shared/Constants.js"
 import { spawnUnit } from "./UnitFactory.js";
-import { EDICT_BUILDINGS, BuildingType } from "../../../shared/BuildingDefs.js";
+import { BuildingType } from "../../../shared/Buildings.js";
+import { EDICT_BUILDINGS } from "../../../shared/Edicts.js";
 import { Edict } from "../../../shared/Edicts.js";
 
 const UNITS_AT_START = 5;

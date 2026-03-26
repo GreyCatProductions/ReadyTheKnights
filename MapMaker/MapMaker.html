@@ -261,10 +261,21 @@
               <input id="foodInput" type="number" />
             </div>
             <div class="field grow">
-              <label>menPerRound</label>
-              <input id="menInput" type="number" />
+              <label>woodPerRound</label>
+              <input id="woodInput" type="number" />
             </div>
           </div>
+
+          <div class="sep"></div>
+
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+            <input id="hasFoodInput" type="checkbox" style="width:16px; height:16px; cursor:pointer;" />
+            <span>Node has food</span>
+          </label>
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin-top:6px;">
+            <input id="hasWoodInput" type="checkbox" style="width:16px; height:16px; cursor:pointer;" />
+            <span>Node has wood</span>
+          </label>
 
           <div class="sep"></div>
 
@@ -311,7 +322,7 @@
   let selectedId = "";
 
   // nodes stores only name + stats + flags. row/column are always derived from grid position.
-  let nodes = {};  // { [id]: { name, stats: { foodPerRound, menPerRound, woodPerRound }, playerSpawnTile } }
+  let nodes = {};  // { [id]: { name, stats: { foodPerRound, woodPerRound }, playerSpawnTile } }
 
   // ===== DOM refs =====
   const gridEl      = document.getElementById("grid");
@@ -331,7 +342,9 @@
   const infoCol    = document.getElementById("infoCol");
   const renameInput= document.getElementById("renameInput");
   const foodInput  = document.getElementById("foodInput");
-  const menInput   = document.getElementById("menInput");
+  const woodInput  = document.getElementById("woodInput");
+  const hasFoodInput = document.getElementById("hasFoodInput");
+  const hasWoodInput = document.getElementById("hasWoodInput");
   const spawnInput = document.getElementById("spawnInput");
 
   const ioArea = document.getElementById("ioArea");
@@ -356,7 +369,9 @@
   });
 
   foodInput.addEventListener("change", updateSelectedStats);
-  menInput.addEventListener("change", updateSelectedStats);
+  woodInput.addEventListener("change", updateSelectedStats);
+  hasFoodInput.addEventListener("change", updateSelectedStats);
+  hasWoodInput.addEventListener("change", updateSelectedStats);
   spawnInput.addEventListener("change", updateSelectedStats);
 
   // ===== Helpers =====
@@ -366,7 +381,7 @@
 
   function ensureNode(id) {
     if (!nodes[id]) {
-      nodes[id] = { name: id, stats: { foodPerRound: 0, menPerRound: 0, woodPerRound: 0 }, playerSpawnTile: false };
+      nodes[id] = { name: id, stats: { foodPerRound: 0, woodPerRound: 0, hasFood: false, hasWood: false }, playerSpawnTile: false };
     }
   }
 
@@ -391,8 +406,9 @@
           playerSpawnTile: node.playerSpawnTile ?? false,
           stats: {
             foodPerRound: node.stats?.foodPerRound ?? 0,
-            menPerRound:  node.stats?.menPerRound  ?? 0,
-            woodPerRound: node.stats?.woodPerRound ?? 0
+            woodPerRound: node.stats?.woodPerRound ?? 0,
+            hasFood: node.stats?.hasFood ?? false,
+            hasWood: node.stats?.hasWood ?? false
           }
         };
       }
@@ -466,7 +482,9 @@
   function updateSelectedStats() {
     if (!selectedId || !nodes[selectedId]) return;
     nodes[selectedId].stats.foodPerRound = parseInt(foodInput.value || "0", 10);
-    nodes[selectedId].stats.menPerRound  = parseInt(menInput.value  || "0", 10);
+    nodes[selectedId].stats.woodPerRound = parseInt(woodInput.value || "0", 10);
+    nodes[selectedId].stats.hasFood      = hasFoodInput.checked;
+    nodes[selectedId].stats.hasWood      = hasWoodInput.checked;
     nodes[selectedId].playerSpawnTile    = spawnInput.checked;
     syncTextarea();
     renderGrid();
@@ -551,8 +569,9 @@
         playerSpawnTile: n?.playerSpawnTile === true,
         stats: {
           foodPerRound: typeof n?.stats?.foodPerRound === "number" ? n.stats.foodPerRound : 0,
-          menPerRound:  typeof n?.stats?.menPerRound  === "number" ? n.stats.menPerRound  : 0,
-          woodPerRound: typeof n?.stats?.woodPerRound === "number" ? n.stats.woodPerRound : 0
+          woodPerRound: typeof n?.stats?.woodPerRound === "number" ? n.stats.woodPerRound : 0,
+          hasFood: n?.stats?.hasFood === true,
+          hasWood: n?.stats?.hasWood === true
         }
       };
     }
@@ -600,9 +619,11 @@
     infoCol.textContent = pos ? String(pos.column) : "?";
 
     renameInput.value  = selectedId;
-    foodInput.value    = String(node.stats.foodPerRound ?? 0);
-    menInput.value     = String(node.stats.menPerRound  ?? 0);
-    spawnInput.checked = node.playerSpawnTile ?? false;
+    foodInput.value      = String(node.stats.foodPerRound ?? 0);
+    woodInput.value      = String(node.stats.woodPerRound ?? 0);
+    hasFoodInput.checked = node.stats.hasFood ?? false;
+    hasWoodInput.checked = node.stats.hasWood ?? false;
+    spawnInput.checked   = node.playerSpawnTile ?? false;
   }
 
   function renderStatus() {

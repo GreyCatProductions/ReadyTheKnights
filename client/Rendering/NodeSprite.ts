@@ -2,11 +2,12 @@ import { AnimatedSprite, Container, Graphics, Rectangle, Sprite, Text, Texture }
 import { Building, GameNode, NodeStats } from "../../server/src/rooms/schema/GameRoomState";
 import { MapSchema } from "@colyseus/schema";
 import { showContextMenu } from "../UI/ContextMenu";
-import { NODE_RESOURCES } from "../UI/SpriteKeyMap";
+import { RESOURCE_SPRITES } from "../UI/SpriteKeyMap";
 import { CELL_SIZE } from "../../shared/Constants.js";
 import { TroopMoveOverlay } from "./TroopMoveOverlay";
 import { BUILDING_COLOR, BUILDING_FRAMES, CONSTRUCTION_SPRITES, EDICT_SPRITE, makeAnimatedSprite } from "../AssetLoader.js";
-import { BUILDING_DEFS, BuildingType } from "../../shared/BuildingDefs.js";
+import { BUILDING_DEFS} from "../../shared/BuildingDefs.js";
+import { BuildingType } from "../../shared/Buildings.js";
 
 
 const X_PADDING = 8;
@@ -17,6 +18,8 @@ export class NodeSprite extends Container {
 
     private bg: Graphics;
     private buildingLayer: Container;
+    private resourceLayer: Container;
+    private statsLayer: Container;
     private captureBar: Graphics;
     private edictIcon: Sprite;
     private workerLabel: Container = new Container();
@@ -74,6 +77,10 @@ export class NodeSprite extends Container {
         label.y = CELL_SIZE / 2;
 
         this.buildingLayer = new Container();
+        this.resourceLayer = new Container();
+        this.resourceLayer.y = CELL_SIZE - 22;
+        this.statsLayer = new Container();
+        this.statsLayer.y = CELL_SIZE - 22;
         this.captureBar = new Graphics();
 
         this.edictIcon = new Sprite();
@@ -89,30 +96,22 @@ export class NodeSprite extends Container {
 
         this.addChild(this.bg);
         this.addChild(this.buildingLayer);
+        this.addChild(this.statsLayer);
+        this.addChild(this.resourceLayer);
         this.addChild(rect);
         this.addChild(label);
         this.addChild(this.captureBar);
         this.addChild(this.edictIcon);
         this.addChild(this.workerLabel);
-
-        NODE_RESOURCES.forEach(({ key, icon }, i) => {
-            const value = Number(node.stats[key]) || 0;
-            if (!value) return;
-            const y = CELL_SIZE - Y_PADDING - ROW_HEIGHT * (NODE_RESOURCES.length - i);
-
-            const iconText = new Text({ text: icon, style: { fill: '#ffffff', fontSize: 13 } });
-            const valText = new Text({ text: String(value), style: { fill: '#ffffff', fontSize: 13 } });
-            iconText.x = X_PADDING;
-            valText.x = X_PADDING + 22;
-            iconText.y = valText.y = y;
-
-            this.addChild(iconText);
-            this.addChild(valText);
-        });
+        
     }
 
     updateBuildings(buildings: MapSchema<Building>) {
         this.buildingLayer.removeChildren();
+        this.resourceLayer.removeChildren();
+
+        const resourceTypes = new Set<string>();
+
         buildings.forEach((building) => {
             let alias: string;
             if (building.constructionDaysLeft > 0) {
@@ -121,6 +120,8 @@ export class NodeSprite extends Container {
                 alias = (stages && idx >= 0) ? stages[idx]! : building.type;
             } else {
                 alias = building.type;
+                const def = BUILDING_DEFS[building.type as BuildingType];
+                if (def?.resourceType) resourceTypes.add(def.resourceType);
             }
 
             const frameCount = BUILDING_FRAMES[alias];
@@ -133,6 +134,40 @@ export class NodeSprite extends Container {
             (sprite as Sprite).anchor.set(0.5);
             this.buildingLayer.addChild(sprite);
         });
+
+        const ICON_SIZE = 18;
+        let offsetX = 2;
+        resourceTypes.forEach((resourceType) => {
+            const spriteKey = RESOURCE_SPRITES[resourceType];
+            if (!spriteKey) return;
+            const icon = new Sprite(Texture.from(spriteKey));
+            icon.width = ICON_SIZE;
+            icon.height = ICON_SIZE;
+            icon.x = offsetX;
+            icon.y = 0;
+            this.resourceLayer.addChild(icon);
+            offsetX += ICON_SIZE + 2;
+        });
+    }
+
+    updateStats(stats: NodeStats) {
+        this.statsLayer.removeChildren();
+        const ICON_SIZE = 18;
+        const resources: string[] = [];
+        if (stats.hasFood) resources.push("wheat");
+        if (stats.hasWood) resources.push("wood");
+        let offsetX = CELL_SIZE - 2;
+        for (const spriteKey of resources) {
+            offsetX -= ICON_SIZE;
+            const icon = new Sprite(Texture.from(spriteKey));
+            icon.width = ICON_SIZE;
+            icon.height = ICON_SIZE;
+            icon.alpha = 0.5;
+            icon.x = offsetX;
+            icon.y = 0;
+            this.statsLayer.addChild(icon);
+            offsetX -= 2;
+        }
     }
 
     Color = 0xffffff
