@@ -5,7 +5,7 @@ import { showContextMenu } from "../UI/ContextMenu";
 import { RESOURCE_SPRITES } from "../UI/SpriteKeyMap";
 import { CELL_SIZE } from "../../shared/Constants.js";
 import { TroopMoveOverlay } from "./TroopMoveOverlay";
-import { BUILDING_COLOR, BUILDING_FRAMES, CONSTRUCTION_SPRITES, EDICT_SPRITE, makeAnimatedSprite } from "../AssetLoader.js";
+import { BUILDING_COLOR, BUILDING_FRAMES, EDICT_SPRITE, makeAnimatedSprite } from "../AssetLoader.js";
 import { BUILDING_DEFS} from "../../shared/BuildingDefs.js";
 import { BuildingType } from "../../shared/Buildings.js";
 
@@ -113,16 +113,9 @@ export class NodeSprite extends Container {
         const resourceTypes = new Set<string>();
 
         buildings.forEach((building) => {
-            let alias: string;
-            if (building.constructionDaysLeft > 0) {
-                const stages = CONSTRUCTION_SPRITES[building.type];
-                const idx = stages ? stages.length - building.constructionDaysLeft : -1;
-                alias = (stages && idx >= 0) ? stages[idx]! : building.type;
-            } else {
-                alias = building.type;
-                const def = BUILDING_DEFS[building.type as BuildingType];
-                if (def?.resourceType) resourceTypes.add(def.resourceType);
-            }
+            const alias = building.type;
+            const def = BUILDING_DEFS[building.type as BuildingType];
+            if (def?.resourceType) resourceTypes.add(def.resourceType);
 
             const frameCount = BUILDING_FRAMES[alias];
             const sprite = frameCount

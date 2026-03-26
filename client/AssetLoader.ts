@@ -39,26 +39,10 @@ export const EDICT_SPRITE: Record<Edict, string> = {
     [Edict.ClearEdict]: "clear",
 };
 
-export const CONSTRUCTION_SPRITES: Partial<Record<string, string[]>> = {
-    lumber_yard: ['lumber_construction1', 'lumber_construction2', 'lumber_construction3'],
-    windmill: ['windmill_construction1', 'windmill_construction2', 'windmill_construction3']
-};
-
 const SPRITE_MANIFEST: Record<string, string> = {
-    base:                 '/sprites/buildings/base.png',
-
-    windmill_construction1: '/sprites/buildings/lumber/construction/lumber_construction1.png',
-    windmill_construction2: '/sprites/buildings/lumber/construction/lumber_construction2.png',
-    windmill_construction3: '/sprites/buildings/lumber/construction/lumber_construction3.png',
-    windmill:       '/sprites/buildings/windmill/evolution1/windmill.png',
-    windmill_deco:  '/sprites/buildings/windmill/evolution1/wheat_field.png',
-
-    lumber_construction1: '/sprites/buildings/lumber/construction/lumber_construction1.png',
-    lumber_construction2: '/sprites/buildings/lumber/construction/lumber_construction2.png',
-    lumber_construction3: '/sprites/buildings/lumber/construction/lumber_construction3.png',
-    lumber_yard:    '/sprites/buildings/lumber/evolution1/lumber_evolution1.png',
-    lumber_yard_deco:    '/sprites/buildings/lumber/evolution1/lumber_deco1.png',
-    lumber_evolution2:    '/sprites/buildings/lumber/evolution2/lumber_evolution2.png',
+    base:        '/sprites/buildings/base.png',
+    windmill:    '/sprites/buildings/windmill/evolution1/windmill.png',
+    lumber_yard: '/sprites/buildings/lumber/evolution1/lumber_evolution1.png',
 
     wheat:  '/sprites/edicts/wheat.png',
     wood:   '/sprites/edicts/wood.png',
