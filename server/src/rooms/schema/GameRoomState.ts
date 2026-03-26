@@ -48,6 +48,7 @@ export class Unit extends Schema {
   @type("string") assignedBuilding: string = "";
   @type("number") hp: number = 100;
   @type("number") damage: number = 5;
+  @type("number") foodDemand: number = 1;
 }
 
 

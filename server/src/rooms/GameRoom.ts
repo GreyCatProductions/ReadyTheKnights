@@ -13,6 +13,7 @@ import { spawnUnit } from "./UnitFactory.js";
 import { BuildingType } from "../../../shared/Buildings.js";
 import { EDICT_BUILDINGS } from "../../../shared/Edicts.js";
 import { Edict } from "../../../shared/Edicts.js";
+import { consumeFood } from "./FoodConsumption.js";
 
 const UNITS_AT_START = 5;
 export class GameRoom extends Room {
@@ -116,6 +117,7 @@ export class GameRoom extends Room {
     this.state.currentDay++;
     this.state.dayEndTimestamp = Date.now() + this.DAY_DURATION_MS;
     tickNodes(this.state);
+    consumeFood(this.state);
     console.log(`Day ${this.state.currentDay} started`);
   }
 
