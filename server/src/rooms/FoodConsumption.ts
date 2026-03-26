@@ -1,6 +1,7 @@
 import { Unit, GameRoomState } from "./schema/GameRoomState.js";
 
 const STARVATION_DAMAGE = 10;
+const BASE_HEAL = 5;
 
 export function consumeFood(state: GameRoomState) {
     // Group units by owner, sorted ascending by foodDemand (low demand eats first)
@@ -14,11 +15,12 @@ export function consumeFood(state: GameRoomState) {
         const player = state.players.get(ownerId);
         if (!player) return;
 
-        units.sort((a, b) => a.foodDemand - b.foodDemand);
+        units.sort((a, b) => a.foodDemand - b.foodDemand || a.hp - b.hp);
 
         for (const unit of units) {
             if (player.food >= unit.foodDemand) {
                 player.food -= unit.foodDemand;
+                unit.hp = Math.min(unit.maxHp, unit.hp + BASE_HEAL);
             } else {
                 player.food = 0;
                 unit.hp -= STARVATION_DAMAGE;

@@ -110,12 +110,15 @@ export class NodeSprite extends Container {
         this.buildingLayer.removeChildren();
         this.resourceLayer.removeChildren();
 
-        const resourceTypes = new Set<string>();
+        const resourceOutput = new Map<string, number>();
 
         buildings.forEach((building) => {
             const alias = building.type;
             const def = BUILDING_DEFS[building.type as BuildingType];
-            if (def?.resourceType) resourceTypes.add(def.resourceType);
+            if (def?.resourceType && def.resourcePerWorker) {
+                const produced = building.workerCount * def.resourcePerWorker;
+                resourceOutput.set(def.resourceType, (resourceOutput.get(def.resourceType) ?? 0) + produced);
+            }
 
             const frameCount = BUILDING_FRAMES[alias];
             const sprite = frameCount
@@ -130,7 +133,7 @@ export class NodeSprite extends Container {
 
         const ICON_SIZE = 18;
         let offsetX = 2;
-        resourceTypes.forEach((resourceType) => {
+        resourceOutput.forEach((amount, resourceType) => {
             const spriteKey = RESOURCE_SPRITES[resourceType];
             if (!spriteKey) return;
             const icon = new Sprite(Texture.from(spriteKey));
@@ -139,7 +142,12 @@ export class NodeSprite extends Container {
             icon.x = offsetX;
             icon.y = 0;
             this.resourceLayer.addChild(icon);
-            offsetX += ICON_SIZE + 2;
+            offsetX += ICON_SIZE + 1;
+            const label = new Text({ text: `+${amount}`, style: { fill: 0xffffff, fontSize: 11 } });
+            label.x = offsetX;
+            label.y = 3;
+            this.resourceLayer.addChild(label);
+            offsetX += label.width + 4;
         });
     }
 

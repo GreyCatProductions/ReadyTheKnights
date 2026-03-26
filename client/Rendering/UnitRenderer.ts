@@ -19,15 +19,15 @@ export function setupUnitRenderer(
     unitLayer: Container,
     callbacks: ReturnType<typeof Callbacks.get>
 ) {
-    function drawUnit(g: Graphics, unit: { ownerId: string; assignedBuilding: string; hp: number }) {
+    function drawUnit(g: Graphics, unit: { ownerId: string; assignedBuilding: string; hp: number; maxHp: number }) {
         g.clear();
         g.circle(0, 0, 8).fill(getOwnerColor(unit.ownerId));
         const buildingColor = BUILDING_COLOR[unit.assignedBuilding];
         if (buildingColor) g.circle(0, 0, 4).fill(buildingColor);
 
-        if (unit.hp < 100) {
+        if (unit.hp < unit.maxHp) {
             const BAR_W = 16, BAR_H = 3, BAR_Y = -14;
-            const ratio = Math.max(0, unit.hp / 100);
+            const ratio = Math.max(0, unit.hp / unit.maxHp);
             const barColor = ratio > 0.5
                 ? 0x44cc44
                 : ratio > 0.25 ? 0xddaa00 : 0xdd2222;
