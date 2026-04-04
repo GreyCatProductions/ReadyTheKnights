@@ -16,6 +16,8 @@ import { Edict } from "../../../shared/Edicts.js";
 import { consumeFood } from "./FoodConsumption.js";
 
 const UNITS_AT_START = 5;
+const FOOD_AT_START = 20;
+const WOOD_AT_START = 20;
 export class GameRoom extends Room {
   maxClients = 4;
   state = new GameRoomState();
@@ -55,15 +57,18 @@ export class GameRoom extends Room {
       const rowDiff = Math.abs(toNode.row    - fromNode.row);
       if (colDiff + rowDiff !== 1) return;
 
-      const unassigned: string[] = [];
-      const assigned: string[] = [];
+      const idle: string[] = [];
+      const working: string[] = [];
+      const inTransit: string[] = [];
       this.state.units.forEach((unit, id) => {
         if (unit.ownerId !== client.sessionId) return;
         const { col, row } = worldToGrid(unit.posX, unit.posY);
         if (col !== fromNode.column || row !== fromNode.row) return;
-        (unit.assignedBuilding ? assigned : unassigned).push(id);
+        if (unit.nodeId !== from)       inTransit.push(id);
+        else if (unit.assignedBuilding) working.push(id);
+        else                            idle.push(id);
       });
-      const candidates = [...unassigned, ...assigned];
+      const candidates = [...idle, ...working, ...inTransit];
 
       if(candidates.length === 0) return;
 
@@ -125,6 +130,9 @@ export class GameRoom extends Room {
     console.log(client.sessionId, "joined!");
     const player = new Player();
     this.state.players.set(client.sessionId, player);
+
+    player.wood = WOOD_AT_START;
+    player.food = FOOD_AT_START;
 
     const freeSpawns = [...this.state.map.nodes.entries()].filter(([, n]) => n.playerSpawnTile && n.ownerId === "");
     if (freeSpawns.length > 0) {
