@@ -16,6 +16,7 @@ export function createBuilding(type: BuildingType, ownerId: string): Building {
     b.populationMaxIncrease = def.populationMaxIncrease ?? 0;
     b.resourcesNeeded.wood = def.woodCost ?? 0;
     b.resourcesNeeded.food = def.foodCost ?? 0;
+    b.daysToBuild = def.daysToBuild ?? 1;
 
     return b;
 }

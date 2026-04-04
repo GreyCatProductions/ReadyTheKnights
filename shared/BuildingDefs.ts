@@ -2,6 +2,7 @@ import { ResourceType } from "./Resources.js";
 import { BuildingType } from "./Buildings.js";
 
 export type BuildingDef = {
+    daysToBuild?: number;
     spawnPerDay?: number;
     resourceType?: ResourceType | null;
     resourcePerWorker?: number | null;
@@ -13,11 +14,11 @@ export type BuildingDef = {
 
 export const BUILDING_DEFS: Record<BuildingType, BuildingDef> =
 {
-    [BuildingType.Base]: { spawnPerDay: 1, resourceType: null, populationMaxIncrease: 10, resourcePerWorker: null },
+    [BuildingType.Base]: { daysToBuild: 0, spawnPerDay: 1, populationMaxIncrease: 10 },
 
-    [BuildingType.Windmill1]: { resourceType: "food", resourcePerWorker: 1, maxWorkers: 3, woodCost: 3 },
+    [BuildingType.Windmill1]: { daysToBuild: 3, resourceType: "food", resourcePerWorker: 1, maxWorkers: 3, woodCost: 3 },
 
-    [BuildingType.House]: { spawnPerDay: 1, resourceType: null, populationMaxIncrease: 5, resourcePerWorker: null, woodCost: 2 },
+    [BuildingType.House]: { daysToBuild: 2, spawnPerDay: 1, populationMaxIncrease: 5, woodCost: 2 },
 
-    [BuildingType.Lumber_yard]: { resourceType: "wood", resourcePerWorker: 1, maxWorkers: 2, foodCost: 2 },
+    [BuildingType.Lumber_yard]: { daysToBuild: 2, resourceType: "wood", resourcePerWorker: 1, maxWorkers: 2, foodCost: 2 },
 };

@@ -123,13 +123,16 @@ export class NodeSprite extends Container {
                 resourceOutput.set(def.resourceType, (resourceOutput.get(def.resourceType) ?? 0) + produced);
             }
 
-            const sprite = makeBuilding(building);
-            if(sprite)
-                this.buildingLayer.addChild(sprite);
-
             if (building.resourcesNeeded.wood > 0 || building.resourcesNeeded.food > 0) {
-                this.buildingLayer.addChild(makeScaffolding(building))
+                this.buildingLayer.addChild(makeSprite(building, "construction"));
                 this.buildingLayer.addChild(makeDemandBubble(building));
+            } else if (building.daysToBuild > 0) {
+                this.buildingLayer.addChild(makeSprite(building, "scaffolding"));
+                this.buildingLayer.addChild(makeSprite(building, "construction"));
+                this.buildingLayer.addChild(makeConstructionProgress(building));
+            } else {
+                const sprite = makeBuilding(building);
+                if (sprite) this.buildingLayer.addChild(sprite);
             }
         });
 
@@ -275,8 +278,28 @@ function makeDemandBubble(building: Building): Container {
     return bubble;
 }
 
-function makeScaffolding(building: Building): Sprite {
-    const sprite = new Sprite(Texture.from("scaffolding"));
+function makeConstructionProgress(building: Building): Container {
+    const RADIUS = 14;
+    const c = new Container();
+    c.x = building.posX;
+    c.y = building.posY - 24;
+
+    const arc = new Graphics();
+    arc.circle(0, 0, RADIUS).fill({ color: 0x000000, alpha: 0.6 });
+    c.addChild(arc);
+
+    const label = new Text({
+        text: `${building.daysToBuild}`,
+        style: { fill: 0xffffff, fontSize: 13, fontWeight: "bold" },
+    });
+    label.anchor.set(0.5);
+    c.addChild(label);
+
+    return c;
+}
+
+function makeSprite(building: Building, textureName: string): Sprite{
+    const sprite = new Sprite(Texture.from(textureName));
     sprite.x = building.posX;
     sprite.y = building.posY;
     (sprite as Sprite).anchor.set(0.5);

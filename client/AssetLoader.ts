@@ -46,6 +46,7 @@ const SPRITE_MANIFEST: Record<string, string> = {
     lumber_yard: '/sprites/buildings/lumber_evolution1.png',
     house: '/sprites/buildings/house.png',
     scaffolding: '/sprites/buildings/scaffolding.png',
+    construction: '/sprites/buildings/construction.png',
 
     wheat:  '/sprites/edicts/wheat.png',
     wood:   '/sprites/edicts/wood.png',

@@ -4,6 +4,8 @@ import { BuildingType } from "../../../shared/Buildings.js";
 import { spawnUnit } from "./UnitFactory.js";
 import { Edict, EDICT_BUILDINGS } from "../../../shared/Edicts.js";
 import { placeBuilding } from "./BuildingFactory.js";
+import { worldToGrid } from "../../../shared/Constants.js";
+import { tryAssignWorker } from "./WorkerSystem.js";
 
 export function tickNodes(state: GameRoomState) {
     state.map.nodes.forEach((node, nodeId) => {
@@ -12,6 +14,19 @@ export function tickNodes(state: GameRoomState) {
             if (!def) return;
 
             if (building.resourcesNeeded.wood > 0 || building.resourcesNeeded.food > 0) return;
+
+            if (building.daysToBuild > 0) {
+                building.daysToBuild--;
+                if (building.daysToBuild === 0) {
+                    state.units.forEach((unit, unitId) => {
+                        if (unit.ownerId !== building.ownerId || unit.assignedBuilding) return;
+                        const { col, row } = worldToGrid(unit.posX, unit.posY);
+                        if (col === node.column && row === node.row)
+                            tryAssignWorker(state, unitId, nodeId);
+                    });
+                }
+                return;
+            }
 
             if (!def.spawnPerDay && !def.resourceType) return;
             if (def.spawnPerDay)  handleSpawn(building, def, node, nodeId, state);

@@ -25,6 +25,7 @@ export class Building extends Schema {
   @type("number") workerCount: number = 0;
   @type("number") populationMaxIncrease: number = 0;
   @type(Resources) resourcesNeeded: Resources = new Resources();
+  @type("number") daysToBuild: number = 1;
 }
 
 export class GameNode extends Schema
