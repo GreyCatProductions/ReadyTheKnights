@@ -16,7 +16,8 @@ const ROW_HEIGHT = 16;
 
 export class NodeSprite extends Container {
 
-    private bg: Graphics;
+    private bgSprite: Sprite;
+    private bgTint: Graphics;
     private buildingLayer: Container;
     private resourceLayer: Container;
     private statsLayer: Container;
@@ -62,8 +63,10 @@ export class NodeSprite extends Container {
             }
         });
 
-        this.bg = new Graphics();
-        this.bg.rect(0, 0, CELL_SIZE, CELL_SIZE).fill(0x555555);
+        this.bgSprite = new Sprite(Texture.from("grass17"));
+        this.bgSprite.width = CELL_SIZE;
+        this.bgSprite.height = CELL_SIZE;
+        this.bgTint = new Graphics();
 
         const rect = new Graphics();
         rect.rect(0, 0, CELL_SIZE, CELL_SIZE).stroke({ width: 2, color: 0x000000 });
@@ -94,7 +97,8 @@ export class NodeSprite extends Container {
         this.workerLabel.x = 4;
         this.workerLabel.y = 4;
 
-        this.addChild(this.bg);
+        this.addChild(this.bgSprite);
+        this.addChild(this.bgTint);
         this.addChild(this.buildingLayer);
         this.addChild(this.statsLayer);
         this.addChild(this.resourceLayer);
@@ -112,25 +116,19 @@ export class NodeSprite extends Container {
 
         const resourceOutput = new Map<string, number>();
 
-        buildings.forEach((building) => {
-            const alias = building.type;
+        buildings.forEach((building) => {;
             const def = BUILDING_DEFS[building.type as BuildingType];
             if (def?.resourceType && def.resourcePerWorker) {
                 const produced = building.workerCount * def.resourcePerWorker;
                 resourceOutput.set(def.resourceType, (resourceOutput.get(def.resourceType) ?? 0) + produced);
             }
 
-            const frameCount = BUILDING_FRAMES[alias];
-            const sprite = frameCount
-                ? makeAnimatedSprite(alias, frameCount)
-                : new Sprite(Texture.from(alias));
-            if(!sprite) return;
-            sprite.x = building.posX;
-            sprite.y = building.posY;
-            (sprite as Sprite).anchor.set(0.5);
-            this.buildingLayer.addChild(sprite);
+            const sprite = makeBuilding(building);
+            if(sprite)
+                this.buildingLayer.addChild(sprite);
 
             if (building.resourcesNeeded.wood > 0 || building.resourcesNeeded.food > 0) {
+                this.buildingLayer.addChild(makeScaffolding(building))
                 this.buildingLayer.addChild(makeDemandBubble(building));
             }
         });
@@ -221,10 +219,24 @@ export class NodeSprite extends Container {
         }
     }
 
-    setBackground(color: number) {
-        this.bg.clear();
-        this.bg.rect(0, 0, CELL_SIZE, CELL_SIZE).fill(color);
+    setBackground(color: number, alpha = 0.35) {
+        this.bgTint.clear();
+        this.bgTint.rect(0, 0, CELL_SIZE, CELL_SIZE).fill({ color, alpha });
     }
+}
+
+function makeBuilding(building: Building)
+{
+    const alias = building.type;
+    const frameCount = BUILDING_FRAMES[alias];
+    const sprite = frameCount
+        ? makeAnimatedSprite(alias, frameCount)
+        : new Sprite(Texture.from(alias));
+    if(!sprite) return;
+    sprite.x = building.posX;
+    sprite.y = building.posY;
+    (sprite as Sprite).anchor.set(0.5);
+    return sprite;
 }
 
 function makeDemandBubble(building: Building): Container {
@@ -261,4 +273,12 @@ function makeDemandBubble(building: Building): Container {
     bubble.x = building.posX - W / 2;
     bubble.y = building.posY - 36;
     return bubble;
+}
+
+function makeScaffolding(building: Building): Sprite {
+    const sprite = new Sprite(Texture.from("scaffolding"));
+    sprite.x = building.posX;
+    sprite.y = building.posY;
+    (sprite as Sprite).anchor.set(0.5);
+    return sprite;
 }

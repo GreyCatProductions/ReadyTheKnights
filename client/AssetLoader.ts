@@ -45,11 +45,14 @@ const SPRITE_MANIFEST: Record<string, string> = {
     windmill:    '/sprites/buildings/windmill.png',
     lumber_yard: '/sprites/buildings/lumber_evolution1.png',
     house: '/sprites/buildings/house.png',
+    scaffolding: '/sprites/buildings/scaffolding.png',
 
     wheat:  '/sprites/edicts/wheat.png',
     wood:   '/sprites/edicts/wood.png',
     worker: '/sprites/edicts/worker.png',
     clear:  '/sprites/edicts/clear.png',
+
+    grass17: '/sprites/world/grass17.png',
 };
 
 export async function LoadAssets() {
