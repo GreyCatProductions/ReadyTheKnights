@@ -11,6 +11,7 @@ import { setupCardHand as setupEdicts } from "./UI/CardHand";
 import { setupCamera } from "./Camera";
 import { LoadAssets } from "./AssetLoader";
 import { Edict } from "../shared/Edicts";
+import { EDICT_CONDITIONS } from "../shared/EdictConditions"
 
 
 const client = new Client("ws://localhost:2567");
@@ -98,21 +99,30 @@ const app = new Application();
     });
 
     setupHUD(app, room);
+
+    function nodeAtScreen(screenX: number, screenY: number) {
+        const { col, row } = worldToGrid(screenX - world.x, screenY - world.y);
+        const nodeId = [...nodeSprites.entries()]
+            .find(([, s]) => s.x / CELL_SIZE === col && s.y / CELL_SIZE === row)?.[0];
+        const node = nodeId ? room.state.map.nodes.get(nodeId) : undefined;
+        return { nodeId, node };
+    }
+
     setupEdicts(app, [
         { edict: Edict.HarvestEdict },
         { edict: Edict.LumberEdict },
         { edict: Edict.SettleEdict },
         { edict: Edict.ClearEdict },
         { edict: Edict.GrantEdict },
-    ], (card, screenX, screenY) => {
-        const worldX = screenX - world.x;
-        const worldY = screenY - world.y;
-        const { col, row } = worldToGrid(worldX, worldY);
-        const nodeId = [...nodeSprites.entries()]
-            .find(([, sprite]) => sprite.x / CELL_SIZE === col && sprite.y / CELL_SIZE === row)?.[0];
+    ],
+    (card, screenX, screenY) => {
+        const { nodeId } = nodeAtScreen(screenX, screenY);
         if (!nodeId) return;
-        
-        console.log(`Issuing ${card.edict} to node ${nodeId}`);
         room.send("edict", { nodeId, edict: card.edict });
+    },
+    (card, screenX, screenY) => {
+        const { node } = nodeAtScreen(screenX, screenY);
+        if (!node) return false;
+        return EDICT_CONDITIONS[card.edict](node, room.sessionId);
     });
 })();

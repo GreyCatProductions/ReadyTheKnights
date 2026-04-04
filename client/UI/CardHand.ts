@@ -48,6 +48,7 @@ export function setupCardHand(
     app: Application,
     cards: CardData[],
     onDrop?: (card: CardData, screenX: number, screenY: number) => void,
+    onHover?: (card: CardData, screenX: number, screenY: number) => boolean,
 ): { setCards: (cards: CardData[]) => void } {
     const container = new Container();
     app.stage.addChild(container);
@@ -85,9 +86,13 @@ export function setupCardHand(
     }
 
     app.canvas.addEventListener("pointermove", (e) => {
-        if (!ghost) return;
+        if (!ghost || !dragCard) return;
         ghost.x = e.clientX - CARD_W / 2;
         ghost.y = e.clientY - CARD_H / 2;
+        if (onHover) {
+            const valid = onHover(dragCard, e.clientX, e.clientY);
+            ghost.tint = valid ? 0x00ff88 : 0xff4444;
+        }
     });
 
     app.canvas.addEventListener("pointerup", (e) => {

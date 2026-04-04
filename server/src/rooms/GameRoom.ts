@@ -14,6 +14,7 @@ import { BuildingType } from "../../../shared/Buildings.js";
 import { EDICT_BUILDINGS } from "../../../shared/Edicts.js";
 import { Edict } from "../../../shared/Edicts.js";
 import { consumeFood } from "./FoodConsumption.js";
+import { EDICT_CONDITIONS } from "../../../shared/EdictConditions.js";
 
 const UNITS_AT_START = 5;
 const FOOD_AT_START = 20;
@@ -84,7 +85,7 @@ export class GameRoom extends Room {
 
     this.onMessage("edict", (client, { nodeId, edict }: { nodeId: string, edict: Edict }) => {
       const node = this.state.map.nodes.get(nodeId);
-      if (!node || node.ownerId !== client.sessionId) return;
+      if (!node || !EDICT_CONDITIONS[edict]?.(node, client.sessionId)) return;
 
       if (edict === Edict.GrantEdict) {
         node.buildings.forEach((building) => {
