@@ -11,7 +11,7 @@ export const Edict = {
 export const EDICT_BUILDINGS: Record<Edict, BuildingType | null> = {
     [Edict.HarvestEdict]: BuildingType.Windmill1,
     [Edict.LumberEdict]: BuildingType.Lumber_yard,
-    [Edict.SettleEdict]: BuildingType.Houses,
+    [Edict.SettleEdict]: BuildingType.House,
     [Edict.ClearEdict]: null,
     [Edict.GrantEdict]: null,
 };

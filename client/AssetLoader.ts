@@ -28,25 +28,27 @@ export const BUILDING_FRAMES: Partial<Record<string, number>> = {
 export const BUILDING_COLOR: Partial<Record<string, number>> = {
     base: 0xaaaaaa,
     windmill: 0xf5c518,
-    houses: 0x55cc55,
+    house: 0x55cc55,
     lumber_yard: 0xa0522d,
 };
 
 export const EDICT_SPRITE: Record<Edict, string> = {
     [Edict.HarvestEdict]: "wheat",
     [Edict.LumberEdict]: "wood",
-    [Edict.SettleEdict]: "wheat",
+    [Edict.SettleEdict]: "worker",
     [Edict.ClearEdict]: "clear",
     [Edict.GrantEdict]: "wheat",
 };
 
 const SPRITE_MANIFEST: Record<string, string> = {
     base:        '/sprites/buildings/base.png',
-    windmill:    '/sprites/buildings/windmill/evolution1/windmill.png',
-    lumber_yard: '/sprites/buildings/lumber/evolution1/lumber_evolution1.png',
+    windmill:    '/sprites/buildings/windmill.png',
+    lumber_yard: '/sprites/buildings/lumber_evolution1.png',
+    house: '/sprites/buildings/house.png',
 
     wheat:  '/sprites/edicts/wheat.png',
     wood:   '/sprites/edicts/wood.png',
+    worker: '/sprites/edicts/worker.png',
     clear:  '/sprites/edicts/clear.png',
 };
 
