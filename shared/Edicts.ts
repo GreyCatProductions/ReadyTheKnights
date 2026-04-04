@@ -4,7 +4,8 @@ export const Edict = {
     HarvestEdict: "Harvest Edict",
     LumberEdict:  "Lumber Edict",
     SettleEdict:  "Settle Edict",
-    ClearEdict: "Clear Edict",
+    ClearEdict:   "Clear Edict",
+    GrantEdict:   "Grant Edict",
 } as const;
 
 export const EDICT_BUILDINGS: Record<Edict, BuildingType | null> = {
@@ -12,6 +13,7 @@ export const EDICT_BUILDINGS: Record<Edict, BuildingType | null> = {
     [Edict.LumberEdict]: BuildingType.Lumber_yard,
     [Edict.SettleEdict]: BuildingType.Houses,
     [Edict.ClearEdict]: null,
+    [Edict.GrantEdict]: null,
 };
 
 export type Edict = typeof Edict[keyof typeof Edict];

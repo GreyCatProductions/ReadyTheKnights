@@ -2,9 +2,9 @@ import { Room, Client, CloseCode } from "colyseus";
 import { GameRoomState, Player } from "./schema/GameRoomState.js";
 import { placeBuilding } from "./BuildingFactory.js";
 import { loadMapJSON } from "../../../shared/MapCreation/MapTranslator.js";
-import { tickNodes } from "./BuildingSystem.js";
+import { tickNodes, fulfillDemand } from "./BuildingSystem.js";
 import { tickUnitMovement, removeUnitTarget } from "./UnitMovementSystem.js";
-import { unassignWorker } from "./WorkerSystem.js";
+import { unassignWorker, tryAssignWorker } from "./WorkerSystem.js";
 import { tickBattles } from "./BattleSystem.js";
 import path from "node:path";
 import { createMap } from "./MapGeneration/MapGenerator.js";
@@ -86,6 +86,22 @@ export class GameRoom extends Room {
       const node = this.state.map.nodes.get(nodeId);
       if (!node || node.ownerId !== client.sessionId) return;
 
+      if (edict === Edict.GrantEdict) {
+        node.buildings.forEach((building) => {
+          if (building.resourcesNeeded.wood === 0 && building.resourcesNeeded.food === 0) return;
+          fulfillDemand(building, this.state);
+          if (building.resourcesNeeded.wood === 0 && building.resourcesNeeded.food === 0) {
+            this.state.units.forEach((unit, unitId) => {
+              if (unit.ownerId !== client.sessionId || unit.assignedBuilding) return;
+              const { col, row } = worldToGrid(unit.posX, unit.posY);
+              if (col === node.column && row === node.row)
+                tryAssignWorker(this.state, unitId, nodeId);
+            });
+          }
+        });
+        return;
+      }
+
       if (edict === Edict.ClearEdict) {
         const buildingType = EDICT_BUILDINGS[node.edict as Edict];
         if (buildingType && node.buildings.has(buildingType)) {
@@ -131,8 +147,8 @@ export class GameRoom extends Room {
     const player = new Player();
     this.state.players.set(client.sessionId, player);
 
-    player.wood = WOOD_AT_START;
-    player.food = FOOD_AT_START;
+    player.resources.wood = WOOD_AT_START;
+    player.resources.food = FOOD_AT_START;
 
     const freeSpawns = [...this.state.map.nodes.entries()].filter(([, n]) => n.playerSpawnTile && n.ownerId === "");
     if (freeSpawns.length > 0) {

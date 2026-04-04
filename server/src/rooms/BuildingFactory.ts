@@ -14,6 +14,9 @@ export function createBuilding(type: BuildingType, ownerId: string): Building {
     b.posX    = CELL_SIZE / 2;
     b.posY    = CELL_SIZE / 2;
     b.populationMaxIncrease = def.populationMaxIncrease ?? 0;
+    b.resourcesNeeded.wood = def.woodCost ?? 0;
+    b.resourcesNeeded.food = def.foodCost ?? 0;
+
     return b;
 }
 
@@ -21,7 +24,7 @@ export function placeBuilding(node: GameNode, type: BuildingType, ownerId: strin
     const b = createBuilding(type, ownerId);
     node.buildings.set(type, b);
 
-    if (state && nodeId) {
+    if (state && nodeId && b.resourcesNeeded.wood === 0 && b.resourcesNeeded.food === 0) {
         state.units.forEach((unit, id) => {
             if (unit.assignedBuilding || unit.ownerId !== ownerId) return;
             const { col, row } = worldToGrid(unit.posX, unit.posY);

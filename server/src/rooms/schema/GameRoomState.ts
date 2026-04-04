@@ -1,9 +1,14 @@
 import { MapSchema, Schema, type } from "@colyseus/schema";
 
-export class Player extends Schema
+export class Resources extends Schema
 {
   @type("number") wood: number = 0;
   @type("number") food: number = 0;
+}
+
+export class Player extends Schema
+{
+  @type(Resources) resources: Resources = new Resources();
 }
 
 export class NodeStats extends Schema
@@ -19,6 +24,7 @@ export class Building extends Schema {
   @type("number") posY: number = -1;
   @type("number") workerCount: number = 0;
   @type("number") populationMaxIncrease: number = 0;
+  @type(Resources) resourcesNeeded: Resources = new Resources();
 }
 
 export class GameNode extends Schema
@@ -59,6 +65,6 @@ export class GameRoomState extends Schema {
   @type({ map: Player }) players = new MapSchema<Player>();
   @type({ map : Unit }) units = new MapSchema<Unit>();
   @type(GameMap) map = new GameMap();
-  @type("number") currentDay: number;
-  @type("number") dayEndTimestamp: number;
+  @type("number") currentDay: number = 0;
+  @type("number") dayEndTimestamp: number = 0;
 }

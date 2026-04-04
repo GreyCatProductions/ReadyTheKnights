@@ -18,11 +18,11 @@ export function consumeFood(state: GameRoomState) {
         units.sort((a, b) => a.foodDemand - b.foodDemand || a.hp - b.hp);
 
         for (const unit of units) {
-            if (player.food >= unit.foodDemand) {
-                player.food -= unit.foodDemand;
+            if (player.resources.food >= unit.foodDemand) {
+                player.resources.food -= unit.foodDemand;
                 unit.hp = Math.min(unit.maxHp, unit.hp + BASE_HEAL);
             } else {
-                player.food = 0;
+                player.resources.food = 0;
                 unit.hp -= STARVATION_DAMAGE;
             }
         }

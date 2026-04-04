@@ -37,6 +37,7 @@ export const EDICT_SPRITE: Record<Edict, string> = {
     [Edict.LumberEdict]: "wood",
     [Edict.SettleEdict]: "wheat",
     [Edict.ClearEdict]: "clear",
+    [Edict.GrantEdict]: "wheat",
 };
 
 const SPRITE_MANIFEST: Record<string, string> = {

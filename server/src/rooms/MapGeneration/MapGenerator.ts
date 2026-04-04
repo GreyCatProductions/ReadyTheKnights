@@ -12,8 +12,6 @@ export function createMap(gameMap: GameMap, mapJson: GameMapJSON) {
         node.row = nodeJson.row;
         node.column = nodeJson.column;
         node.playerSpawnTile = nodeJson.playerSpawnTile;
-        node.stats.woodPerRound = nodeJson.stats?.woodPerRound ?? 0;
-        node.stats.foodPerRound = nodeJson.stats?.foodPerRound ?? 0;
         node.stats.hasFood = nodeJson.stats?.hasFood ?? false;
         node.stats.hasWood = nodeJson.stats?.hasWood ?? false;
 

@@ -9,14 +9,33 @@ export function tickNodes(state: GameRoomState) {
     state.map.nodes.forEach((node, nodeId) => {
         node.buildings.forEach((building) => {
             const def = BUILDING_DEFS[building.type as BuildingType];
-            if (!def || (!def.spawnPerDay && !def.resourceType)) return;
+            if (!def) return;
 
+            if (building.resourcesNeeded.wood > 0 || building.resourcesNeeded.food > 0) return;
+
+            if (!def.spawnPerDay && !def.resourceType) return;
             if (def.spawnPerDay)  handleSpawn(building, def, node, nodeId, state);
             if (def.resourceType) handleResource(building, def, node, state);
         });
 
         if (node.edict) handleEdict(node, nodeId, state);
     });
+}
+
+export function fulfillDemand(building: Building, state: GameRoomState) {
+    const player = state.players.get(building.ownerId);
+    if (!player) return;
+
+    if (building.resourcesNeeded.wood > 0) {
+        const pay = Math.min(building.resourcesNeeded.wood, player.resources.wood);
+        player.resources.wood      -= pay;
+        building.resourcesNeeded.wood -= pay;
+    }
+    if (building.resourcesNeeded.food > 0) {
+        const pay = Math.min(building.resourcesNeeded.food, player.resources.food);
+        player.resources.food      -= pay;
+        building.resourcesNeeded.food -= pay;
+    }
 }
 
 function getMaxPopulation(ownerId: string, state: GameRoomState): number {
@@ -48,8 +67,8 @@ function handleResource(b: Building, def: BuildingDef, node: GameNode, state: Ga
     const player = state.players.get(b.ownerId);
     if (!player) return;
     const produced = b.workerCount * def.resourcePerWorker;
-    if (def.resourceType === "wood") player.wood += produced;
-    if (def.resourceType === "food") player.food += produced;
+    if (def.resourceType === "wood") player.resources.wood += produced;
+    if (def.resourceType === "food") player.resources.food += produced;
 }
 
 function handleEdict(node: GameNode, nodeId: string, state: GameRoomState) {

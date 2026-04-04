@@ -77,6 +77,7 @@ const app = new Application();
             callbacks.onAdd(node, "buildings", (building) => {
                 refresh(id, node);
                 callbacks.onChange(building, () => refresh(id, node));
+                callbacks.onChange(building.resourcesNeeded, () => refresh(id, node));
             });
             callbacks.onRemove(node, "buildings", () => refresh(id, node));
         });
@@ -101,7 +102,8 @@ const app = new Application();
         { edict: Edict.HarvestEdict },
         { edict: Edict.LumberEdict },
         { edict: Edict.SettleEdict },
-        { edict: Edict.ClearEdict},
+        { edict: Edict.ClearEdict },
+        { edict: Edict.GrantEdict },
     ], (card, screenX, screenY) => {
         const worldX = screenX - world.x;
         const worldY = screenY - world.y;
