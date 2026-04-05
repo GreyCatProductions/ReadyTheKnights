@@ -6,7 +6,7 @@ const BASE_HEAL = 5;
 export function consumeFood(state: GameRoomState) {
     // Group units by owner, sorted ascending by foodDemand (low demand eats first)
     const byPlayer = new Map<string, Unit[]>();
-    state.units.forEach(unit => {
+    state.troops.forEach(unit => {
         if (!byPlayer.has(unit.ownerId)) byPlayer.set(unit.ownerId, []);
         byPlayer.get(unit.ownerId)!.push(unit);
     });

@@ -1,7 +1,7 @@
 import { Building, GameNode, GameRoomState } from "./schema/GameRoomState.js";
 import { BuildingDef, BUILDING_DEFS } from "../../../shared/BuildingDefs.js";
 import { BuildingType } from "../../../shared/Buildings.js";
-import { spawnUnit } from "./UnitFactory.js";
+import { spawnWorker } from "./UnitFactory.js";
 import { Edict, EDICT_BUILDINGS } from "../../../shared/Edicts.js";
 import { placeBuilding } from "./BuildingFactory.js";
 import { worldToGrid } from "../../../shared/Constants.js";
@@ -18,11 +18,11 @@ export function tickNodes(state: GameRoomState) {
             if (building.daysToBuild > 0) {
                 building.daysToBuild--;
                 if (building.daysToBuild === 0) {
-                    state.units.forEach((unit, unitId) => {
-                        if (unit.ownerId !== building.ownerId || unit.assignedBuilding) return;
-                        const { col, row } = worldToGrid(unit.posX, unit.posY);
+                    state.workers.forEach((worker, workerId) => {
+                        if (worker.ownerId !== building.ownerId || worker.assignedBuilding) return;
+                        const { col, row } = worldToGrid(worker.posX, worker.posY);
                         if (col === node.column && row === node.row)
-                            tryAssignWorker(state, unitId, nodeId);
+                            tryAssignWorker(state, workerId, nodeId);
                     });
                 }
                 return;
@@ -66,13 +66,13 @@ function getMaxPopulation(ownerId: string, state: GameRoomState): number {
 function handleSpawn(b: Building, def: BuildingDef, node: GameNode, nodeId: string, state: GameRoomState) {
     if (!def.spawnPerDay) return;
 
-    const unitCount = [...state.units.values()].filter(u => u.ownerId === node.ownerId).length;
+    const unitCount = [...state.troops.values()].filter(u => u.ownerId === node.ownerId).length;
     let counter = unitCount;
     const maxPop = getMaxPopulation(node.ownerId, state);
 
     for (let i = 0; i < def.spawnPerDay; i++) {
         if(maxPop <= counter) return
-        spawnUnit(state, node.ownerId, nodeId);
+        spawnWorker(state, node.ownerId, nodeId);
         counter++;
     }
 }

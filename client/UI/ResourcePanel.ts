@@ -9,7 +9,7 @@ const panel = document.getElementById("resource-panel")!;
 
 export function updateResourcePanel(player: Player, buildings: Building[], state: GameRoomState, sessionId: string) {
     const maxPopulation = buildings.reduce((sum, b) => sum + (b.populationMaxIncrease ?? 0), 0);
-    const population = [...state.units.values()].filter(u => u.ownerId === sessionId).length;
+    const population = [...state.workers.values()].filter(u => u.ownerId === sessionId).length;
 
     const rows = RESOURCES
         .map(r => `<div class="res-row"><span class="res-icon">${r.icon}</span>

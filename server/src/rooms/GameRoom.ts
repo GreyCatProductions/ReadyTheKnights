@@ -9,7 +9,7 @@ import { tickBattles } from "./BattleSystem.js";
 import path from "node:path";
 import { createMap } from "./MapGeneration/MapGenerator.js";
 import { worldToGrid } from "../../../shared/Constants.js"
-import { spawnUnit } from "./UnitFactory.js";
+import { spawnWorker } from "./UnitFactory.js";
 import { BuildingType } from "../../../shared/Buildings.js";
 import { EDICT_BUILDINGS } from "../../../shared/Edicts.js";
 import { Edict } from "../../../shared/Edicts.js";
@@ -59,23 +59,21 @@ export class GameRoom extends Room {
       if (colDiff + rowDiff !== 1) return;
 
       const idle: string[] = [];
-      const working: string[] = [];
       const inTransit: string[] = [];
-      this.state.units.forEach((unit, id) => {
-        if (unit.ownerId !== client.sessionId) return;
-        const { col, row } = worldToGrid(unit.posX, unit.posY);
+      this.state.troops.forEach((troop, id) => {
+        if (troop.ownerId !== client.sessionId) return;
+        const { col, row } = worldToGrid(troop.posX, troop.posY);
         if (col !== fromNode.column || row !== fromNode.row) return;
-        if (unit.nodeId !== from)       inTransit.push(id);
-        else if (unit.assignedBuilding) working.push(id);
+        if (troop.nodeId !== from)       inTransit.push(id);
         else                            idle.push(id);
       });
-      const candidates = [...idle, ...working, ...inTransit];
+      const candidates = [...idle, ...inTransit];
 
       if(candidates.length === 0) return;
 
       const toMove = candidates.slice(0, count);
       for (const id of toMove) {
-        const unit = this.state.units.get(id)!;
+        const unit = this.state.troops.get(id)!;
         unit.nodeId = to;
         removeUnitTarget(id, this.state);
       }
@@ -98,8 +96,8 @@ export class GameRoom extends Room {
       if (edict === Edict.ClearEdict) {
         const buildingType = EDICT_BUILDINGS[node.edict as Edict];
         if (buildingType && node.buildings.has(buildingType)) {
-          this.state.units.forEach((unit, unitId) => {
-            if (unit.assignedBuilding === buildingType) unassignWorker(this.state, unitId);
+          this.state.workers.forEach((worker, workerId) => {
+            if (worker.assignedBuilding === buildingType) unassignWorker(this.state, workerId);
           });
         }
         node.edict = "";
@@ -115,8 +113,8 @@ export class GameRoom extends Room {
       // Destroy any buildings that don't belong to the new edict
       node.buildings.forEach((_, key) => {
         if (key !== buildingType) {
-          this.state.units.forEach((unit, unitId) => {
-            if (unit.assignedBuilding === key) unassignWorker(this.state, unitId);
+          this.state.workers.forEach((worker, workerId) => {
+            if (worker.assignedBuilding === key) unassignWorker(this.state, workerId);
           });
           node.buildings.delete(key);
         }
@@ -150,7 +148,7 @@ export class GameRoom extends Room {
       placeBuilding(spawnNode, "base", client.sessionId);
 
       for (let i = 0; i < UNITS_AT_START; i++) {
-        spawnUnit(this.state, client.sessionId, spawnNodeId);
+        spawnWorker(this.state, client.sessionId, spawnNodeId);
       }
     } else {
       console.warn(`No free spawn tile for ${client.sessionId}`);
@@ -161,10 +159,10 @@ export class GameRoom extends Room {
     console.log(client.sessionId, "left!", code);
 
     this.state.players.delete(client.sessionId);
-    this.state.units.forEach((unit, id) => {
+    this.state.troops.forEach((unit, id) => {
       if (unit.ownerId === client.sessionId) {
         removeUnitTarget(id, this.state);
-        this.state.units.delete(id);
+        this.state.troops.delete(id);
       }
     });
   }

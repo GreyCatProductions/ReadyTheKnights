@@ -26,7 +26,7 @@ export function placeBuilding(node: GameNode, type: BuildingType, ownerId: strin
     node.buildings.set(type, b);
 
     if (state && nodeId && b.resourcesNeeded.wood === 0 && b.resourcesNeeded.food === 0) {
-        state.units.forEach((unit, id) => {
+        state.workers.forEach((unit, id) => {
             if (unit.assignedBuilding || unit.ownerId !== ownerId) return;
             const { col, row } = worldToGrid(unit.posX, unit.posY);
             if (col === node.column && row === node.row)

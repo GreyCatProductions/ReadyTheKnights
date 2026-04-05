@@ -1,6 +1,6 @@
 import { Client } from "@colyseus/sdk";
 import { Application, Container } from "pixi.js";
-import { GameNode, GameRoomState } from "../server/src/rooms/schema/GameRoomState";
+import { GameNode, GameRoomState, Unit } from "../server/src/rooms/schema/GameRoomState";
 import { Callbacks } from "@colyseus/schema";
 import { renderMap, refreshNode, nodeSprites } from "./Rendering/MapRenderer";
 import { CELL_SIZE, worldToGrid } from "../shared/Constants";
@@ -46,7 +46,7 @@ const app = new Application();
 
         const unitCountAt = (col: number, row: number) => {
             let n = 0;
-            state.units.forEach(u => {
+            state.troops.forEach(u => {
                 const g = worldToGrid(u.posX, u.posY);
                 if (g.col === col && g.row === row) n++;
             });
@@ -83,7 +83,7 @@ const app = new Application();
             callbacks.onRemove(node, "buildings", () => refresh(id, node));
         });
 
-        callbacks.onAdd(state, "units", (unit) => {
+        const trackUnitDirty = (unit: Unit) => {
             let prev = worldToGrid(unit.posX, unit.posY);
             callbacks.onChange(unit, () => {
                 const curr = worldToGrid(unit.posX, unit.posY);
@@ -93,7 +93,10 @@ const app = new Application();
                 }
                 markDirtyAtGrid(curr.col, curr.row);
             });
-        });
+        };
+
+        callbacks.onAdd(state, "troops",  (unit) => trackUnitDirty(unit));
+        callbacks.onAdd(state, "workers", (unit) => trackUnitDirty(unit));
 
         setupUnitRenderer(app, state, unitLayer, callbacks);
     });

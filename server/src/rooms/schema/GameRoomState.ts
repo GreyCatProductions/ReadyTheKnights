@@ -47,24 +47,31 @@ export class GameMap extends Schema
   @type({ map: GameNode}) nodes = new MapSchema<GameNode>();
 }
 
-export class Unit extends Schema {
+export abstract class Unit extends Schema {
   @type("string") ownerId: string = "";
   @type("string") nodeId: string = "";
   @type("number") posX: number = -1;
   @type("number") posY: number = -1;
-  @type("string") assignedBuilding: string = "";
   @type("number") hp: number = 100;
   @type("number") maxHp: number = 100;
   @type("number") damage: number = 5;
   @type("number") foodDemand: number = 1;
 }
 
+export class Troop extends Unit {
+    @type("string") type: string = ""; //not implemented
+}
 
+
+export class Worker extends Unit {
+  @type("string") assignedBuilding: string = "";
+}
 
 export class GameRoomState extends Schema {
 
   @type({ map: Player }) players = new MapSchema<Player>();
-  @type({ map : Unit }) units = new MapSchema<Unit>();
+  @type({ map : Troop }) troops = new MapSchema<Troop>();
+  @type({ map : Worker }) workers = new MapSchema<Worker>();
   @type(GameMap) map = new GameMap();
   @type("number") currentDay: number = 0;
   @type("number") dayEndTimestamp: number = 0;

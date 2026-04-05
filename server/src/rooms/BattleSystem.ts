@@ -24,7 +24,7 @@ function buildNodePosMap(state: GameRoomState): Map<string, string> {
 function buildUnitsByNode(state: GameRoomState, nodeAtPos: Map<string, string>): Map<string, Map<string, string[]>> {
     const unitsByNode = new Map<string, Map<string, string[]>>();
 
-    state.units.forEach((unit, id) => {
+    state.troops.forEach((unit, id) => {
         const { col, row } = worldToGrid(unit.posX, unit.posY);
         const nodeId = nodeAtPos.get(`${col},${row}`);
         if (!nodeId) return;
@@ -106,7 +106,7 @@ function tickCombat(state: GameRoomState, unitsByNode: Map<string, Map<string, s
         for (let i = 0; i < sides.length; i++) {
             const enemies = sides.filter((_, j) => j !== i).flat();
             for (const attackerId of sides[i]) {
-                const attacker = state.units.get(attackerId);
+                const attacker = state.troops.get(attackerId);
                 if (!attacker) continue;
                 const target = enemies[Math.floor(Math.random() * enemies.length)];
                 pendingDamage.set(target, (pendingDamage.get(target) ?? 0) + attacker.damage);
@@ -115,12 +115,12 @@ function tickCombat(state: GameRoomState, unitsByNode: Map<string, Map<string, s
 
         // Apply damage and remove dead units
         for (const [id, dmg] of pendingDamage) {
-            const unit = state.units.get(id);
+            const unit = state.troops.get(id);
             if (!unit) continue;
             unit.hp -= dmg;
             if (unit.hp <= 0) {
                 removeUnitTarget(id, state);
-                state.units.delete(id);
+                state.troops.delete(id);
             }
         }
     });

@@ -23,7 +23,7 @@ function randomPointOnNode(col: number, row: number): Target {
 export function tickUnitMovement(state: GameRoomState, deltaMs: number) {
     const dt = deltaMs / 1000;
 
-    state.units.forEach((unit, id) => {
+    state.workers.forEach((unit, id) => {
         const node = state.map.nodes.get(unit.nodeId);
         if (!node) return;
 
