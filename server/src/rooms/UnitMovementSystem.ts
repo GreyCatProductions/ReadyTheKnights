@@ -20,54 +20,60 @@ function randomPointOnNode(col: number, row: number): Target {
     };
 }
 
-export function tickUnitMovement(state: GameRoomState, deltaMs: number) {
-    const dt = deltaMs / 1000;
+function tickUnit(
+    state: GameRoomState,
+    unit: { posX: number; posY: number; nodeId: string },
+    id: string,
+    dt: number,
+    isWorker: boolean,
+) {
+    const node = state.map.nodes.get(unit.nodeId);
+    if (!node) return;
 
-    state.workers.forEach((unit, id) => {
-        const node = state.map.nodes.get(unit.nodeId);
-        if (!node) return;
+    if (!targets.has(id)) targets.set(id, randomPointOnNode(node.column, node.row));
 
-        if (!targets.has(id)) targets.set(id, randomPointOnNode(node.column, node.row));
+    const target = targets.get(id)!;
+    const dx = target.x - unit.posX;
+    const dy = target.y - unit.posY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
 
-        const target = targets.get(id)!;
-        const dx = target.x - unit.posX;
-        const dy = target.y - unit.posY;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-
-        if (dist < ARRIVAL_THRESHOLD) {
-            const now = Date.now();
-            const wait = waitUntil.get(id);
-            if (!wait) {
-                waitUntil.set(id, now + MIN_WAIT_MS + Math.random() * (MAX_WAIT_MS - MIN_WAIT_MS));
-                return;
-            }
-            if (now < wait) return;
-            waitUntil.delete(id);
-            targets.set(id, randomPointOnNode(node.column, node.row));
+    if (dist < ARRIVAL_THRESHOLD) {
+        const now = Date.now();
+        const wait = waitUntil.get(id);
+        if (!wait) {
+            waitUntil.set(id, now + MIN_WAIT_MS + Math.random() * (MAX_WAIT_MS - MIN_WAIT_MS));
             return;
         }
+        if (now < wait) return;
+        waitUntil.delete(id);
+        targets.set(id, randomPointOnNode(node.column, node.row));
+        return;
+    }
 
-        unit.posX += (dx / dist) * SPEED * dt;
-        unit.posY += (dy / dist) * SPEED * dt;
+    unit.posX += (dx / dist) * SPEED * dt;
+    unit.posY += (dy / dist) * SPEED * dt;
 
-        // Detect node crossing
-        const { col, row } = worldToGrid(unit.posX, unit.posY);
-        const physNodeId = `${col},${row}`;
-        const prevPhysNodeId = lastPhysNodeId.get(id);
-        if (physNodeId !== prevPhysNodeId) {
-            lastPhysNodeId.set(id, physNodeId);
-            if (prevPhysNodeId !== undefined) {
-                unassignWorker(state, id);
-                // Find nodeId for the new physical position
-                for (const [nid, n] of state.map.nodes) {
-                    if (n.column === col && n.row === row) {
-                        tryAssignWorker(state, id, nid);
-                        break;
-                    }
+    const { col, row } = worldToGrid(unit.posX, unit.posY);
+    const physNodeId = `${col},${row}`;
+    const prevPhysNodeId = lastPhysNodeId.get(id);
+    if (physNodeId !== prevPhysNodeId) {
+        lastPhysNodeId.set(id, physNodeId);
+        if (prevPhysNodeId !== undefined && isWorker) {
+            unassignWorker(state, id);
+            for (const [nid, n] of state.map.nodes) {
+                if (n.column === col && n.row === row) {
+                    tryAssignWorker(state, id, nid);
+                    break;
                 }
             }
         }
-    });
+    }
+}
+
+export function tickUnitMovement(state: GameRoomState, deltaMs: number) {
+    const dt = deltaMs / 1000;
+    state.troops.forEach((unit, id)  => tickUnit(state, unit, id, dt, false));
+    state.workers.forEach((unit, id) => tickUnit(state, unit, id, dt, true));
 }
 
 export function removeUnitTarget(id: string, state?: GameRoomState) {

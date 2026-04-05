@@ -66,8 +66,10 @@ function getMaxPopulation(ownerId: string, state: GameRoomState): number {
 function handleSpawn(b: Building, def: BuildingDef, node: GameNode, nodeId: string, state: GameRoomState) {
     if (!def.spawnPerDay) return;
 
-    const unitCount = [...state.troops.values()].filter(u => u.ownerId === node.ownerId).length;
-    let counter = unitCount;
+    const troops = [...state.troops.values()].filter(u => u.ownerId === node.ownerId).length;
+    const workers = [...state.workers.values()].filter(u => u.ownerId === node.ownerId).length;
+    let counter = troops + workers;
+    
     const maxPop = getMaxPopulation(node.ownerId, state);
 
     for (let i = 0; i < def.spawnPerDay; i++) {

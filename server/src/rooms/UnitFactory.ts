@@ -10,6 +10,7 @@ export function spawnSoldier(state: GameRoomState, ownerId: string, nodeId: stri
 
     const def = UNIT_DEFS[type];
     const troop = new Troop();
+    troop.type    = type;
     troop.ownerId = ownerId;
     troop.nodeId = nodeId;
     troop.posX = node.column * CELL_SIZE + CELL_SIZE / 2;

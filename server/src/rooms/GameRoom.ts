@@ -9,14 +9,16 @@ import { tickBattles } from "./BattleSystem.js";
 import path from "node:path";
 import { createMap } from "./MapGeneration/MapGenerator.js";
 import { worldToGrid } from "../../../shared/Constants.js"
-import { spawnWorker } from "./UnitFactory.js";
+import { spawnSoldier, spawnWorker } from "./UnitFactory.js";
 import { BuildingType } from "../../../shared/Buildings.js";
 import { EDICT_BUILDINGS } from "../../../shared/Edicts.js";
 import { Edict } from "../../../shared/Edicts.js";
 import { consumeFood } from "./FoodConsumption.js";
 import { EDICT_CONDITIONS } from "../../../shared/EdictConditions.js";
+import { UnitType } from "../../../shared/Units.js";
 
-const UNITS_AT_START = 5;
+const WORKERS_AT_START = 5;
+const SOLDIERS_AT_START = 3;
 const FOOD_AT_START = 20;
 const WOOD_AT_START = 20;
 export class GameRoom extends Room {
@@ -147,8 +149,12 @@ export class GameRoom extends Room {
       spawnNode.ownerId = client.sessionId;
       placeBuilding(spawnNode, "base", client.sessionId);
 
-      for (let i = 0; i < UNITS_AT_START; i++) {
+      for (let i = 0; i < WORKERS_AT_START; i++) {
         spawnWorker(this.state, client.sessionId, spawnNodeId);
+      }
+
+      for (let i = 0; i < SOLDIERS_AT_START; i++) {
+        spawnSoldier(this.state, client.sessionId, spawnNodeId, UnitType.ArmedPeasant);
       }
     } else {
       console.warn(`No free spawn tile for ${client.sessionId}`);
