@@ -16,9 +16,9 @@ export const BUILDING_DEFS: Record<BuildingType, BuildingDef> =
 {
     [BuildingType.Base]: { daysToBuild: 0, spawnPerDay: 1, populationMaxIncrease: 10 },
 
-    [BuildingType.Windmill1]: { daysToBuild: 3, resourceType: "food", resourcePerWorker: 1, maxWorkers: 3, woodCost: 3 },
+    [BuildingType.Windmill1]: { daysToBuild: 2, resourceType: "food", resourcePerWorker: 5, maxWorkers: 3, woodCost: 3 },
 
-    [BuildingType.House]: { daysToBuild: 2, spawnPerDay: 1, populationMaxIncrease: 5, woodCost: 2 },
+    [BuildingType.House]: { daysToBuild: 2, populationMaxIncrease: 5, woodCost: 2 },
 
-    [BuildingType.Lumber_yard]: { daysToBuild: 2, resourceType: "wood", resourcePerWorker: 1, maxWorkers: 2, foodCost: 2 },
+    [BuildingType.Lumber_yard]: { daysToBuild: 2, resourceType: "wood", resourcePerWorker: 2, maxWorkers: 2, foodCost: 2 },
 };
