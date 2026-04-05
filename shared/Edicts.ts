@@ -6,6 +6,8 @@ export const Edict = {
     SettleEdict:  "Settle Edict",
     ClearEdict:   "Clear Edict",
     GrantEdict:   "Grant Edict",
+    ScorchEdict: "Scorch Edict",
+    AnnexEdict: "Annex Edict"
 } as const;
 
 export const EDICT_BUILDINGS: Record<Edict, BuildingType | null> = {
@@ -14,6 +16,8 @@ export const EDICT_BUILDINGS: Record<Edict, BuildingType | null> = {
     [Edict.SettleEdict]: BuildingType.House,
     [Edict.ClearEdict]: null,
     [Edict.GrantEdict]: null,
+    [Edict.ScorchEdict]: null,
+    [Edict.AnnexEdict]: null
 };
 
 export type Edict = typeof Edict[keyof typeof Edict];

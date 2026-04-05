@@ -114,6 +114,8 @@ const app = new Application();
         { edict: Edict.SettleEdict },
         { edict: Edict.ClearEdict },
         { edict: Edict.GrantEdict },
+        { edict: Edict.AnnexEdict},
+        { edict: Edict.ScorchEdict},
     ],
     (card, screenX, screenY) => {
         const { nodeId } = nodeAtScreen(screenX, screenY);

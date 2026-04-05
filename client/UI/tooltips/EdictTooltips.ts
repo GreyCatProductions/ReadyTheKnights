@@ -21,4 +21,12 @@ export const EDICT_TOOLTIPS: Record<Edict, { name: string; description: string }
         name: "Grant Edict",
         description: "Grant the resources needed by buildings in this area.",
     },
+    [Edict.AnnexEdict]: {
+        name: "Annex Edict",
+        description: "This area is ours now! It will take some time for the inhabitants to adjust to the new rule.",
+    },
+    [Edict.ScorchEdict]: {
+        name: "Scorch Edict",
+        description: "Burn everything on this area to the ground. No survivors will be left. After burning an area it will take some time for it to be useful again.",
+    },
 };

@@ -31,6 +31,12 @@ export const EDICT_CONDITIONS: Record<Edict, ConditionFn> = {
         [...node.buildings.values()].some(
             b => b.resourcesNeeded.wood > 0 || b.resourcesNeeded.food > 0
         ),
+    
+    [Edict.ScorchEdict]: (node, sessionId) =>
+        false,
+
+    [Edict.AnnexEdict]: (nodeSprites, sessionId) =>
+        false,
 };
 
 function IsOwner(node: GameNode, sessionId: string)
