@@ -7,7 +7,7 @@ import { CELL_SIZE } from "../../shared/Constants";
 export const nodeSprites = new Map<string, NodeSprite>();
 export let mapBounds = { left: 0, right: 0, top: 0, bottom: 0 };
 
-export function renderMap(map: GameMap, world: Container, sessionId: string, overlay?: TroopMoveOverlay) {
+export function renderMap(map: GameMap, world: Container, sessionId: string, overlay?: TroopMoveOverlay, stage?: Container) {
     let minCol = Infinity, maxCol = -Infinity;
     let minRow = Infinity, maxRow = -Infinity;
 
@@ -17,7 +17,7 @@ export function renderMap(map: GameMap, world: Container, sessionId: string, ove
         minRow = Math.min(minRow, node.row);
         maxRow = Math.max(maxRow, node.row);
 
-        const sprite = new NodeSprite(node, id, sessionId, overlay);
+        const sprite = new NodeSprite(node, id, sessionId, overlay, stage);
         sprite.updateStats(node.stats);
         nodeSprites.set(id, sprite);
         world.addChild(sprite);

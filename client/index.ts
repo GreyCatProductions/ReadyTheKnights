@@ -40,7 +40,7 @@ const app = new Application();
     console.log("Joined successfully!");
 
     room.onStateChange.once((state) => {
-        renderMap(state.map, world, room.sessionId, overlay);
+        renderMap(state.map, world, room.sessionId, overlay, app.stage);
 
         const callbacks = Callbacks.get(room);
 

@@ -8,6 +8,8 @@ import { TroopMoveOverlay } from "./TroopMoveOverlay";
 import { BUILDING_COLOR, BUILDING_FRAMES, EDICT_SPRITE, makeAnimatedSprite } from "../AssetLoader.js";
 import { BUILDING_DEFS} from "../../shared/BuildingDefs.js";
 import { BuildingType } from "../../shared/Buildings.js";
+import { attachTooltip } from "../UI/Tooltip.js";
+import { BUILDING_TOOLTIPS } from "../UI/tooltips/BuildingTooltips.js";
 
 
 const X_PADDING = 8;
@@ -24,14 +26,18 @@ export class NodeSprite extends Container {
     private captureBar: Graphics;
     private edictIcon: Sprite;
     private workerLabel: Container = new Container();
+    private stage: Container;
+    private buildingTooltips: Container[] = [];
 
     constructor(
         node: GameNode,
         nodeId: string,
         sessionId: string,
         overlay?: TroopMoveOverlay,
+        stage?: Container,
     ) {
         super();
+        this.stage = stage ?? this;
 
         this.x = node.column * CELL_SIZE;
         this.y = node.row * CELL_SIZE;
@@ -76,8 +82,9 @@ export class NodeSprite extends Container {
             style: { fill: '#ffffff', fontSize: 18 },
             anchor: 0.5,
         });
+        label.eventMode = 'none';
         label.x = CELL_SIZE / 2;
-        label.y = CELL_SIZE / 2;
+        label.y = CELL_SIZE / 6;
 
         this.buildingLayer = new Container();
         this.resourceLayer = new Container();
@@ -113,6 +120,8 @@ export class NodeSprite extends Container {
     updateBuildings(buildings: MapSchema<Building>) {
         this.buildingLayer.removeChildren();
         this.resourceLayer.removeChildren();
+        this.buildingTooltips.forEach(t => t.parent?.removeChild(t));
+        this.buildingTooltips = [];
 
         const resourceOutput = new Map<string, number>();
 
@@ -132,7 +141,14 @@ export class NodeSprite extends Container {
                 this.buildingLayer.addChild(makeConstructionProgress(building));
             } else {
                 const sprite = makeBuilding(building);
-                if (sprite) this.buildingLayer.addChild(sprite);
+                if (sprite) {
+                    this.buildingLayer.addChild(sprite);
+                    const tooltipDef = BUILDING_TOOLTIPS[building.type as BuildingType];
+                    if (tooltipDef) {
+                        const tip = attachTooltip(sprite, this.stage, () => tooltipDef);
+                        this.buildingTooltips.push(tip);
+                    }
+                }
             }
         });
 
@@ -168,7 +184,7 @@ export class NodeSprite extends Container {
             const icon = new Sprite(Texture.from(spriteKey));
             icon.width = ICON_SIZE;
             icon.height = ICON_SIZE;
-            icon.alpha = 0.5;
+            icon.alpha = 0.75;
             icon.x = offsetX;
             icon.y = 0;
             this.statsLayer.addChild(icon);

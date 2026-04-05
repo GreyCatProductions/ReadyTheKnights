@@ -37,7 +37,7 @@ export const EDICT_SPRITE: Record<Edict, string> = {
     [Edict.LumberEdict]: "wood",
     [Edict.SettleEdict]: "worker",
     [Edict.ClearEdict]: "clear",
-    [Edict.GrantEdict]: "wheat",
+    [Edict.GrantEdict]: "grant",
 };
 
 const SPRITE_MANIFEST: Record<string, string> = {
@@ -52,6 +52,7 @@ const SPRITE_MANIFEST: Record<string, string> = {
     wood:   '/sprites/edicts/wood.png',
     worker: '/sprites/edicts/worker.png',
     clear:  '/sprites/edicts/clear.png',
+    grant: '/sprites/edicts/grant.png',
 
     grass17: '/sprites/world/grass17.png',
 };

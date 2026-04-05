@@ -1,6 +1,9 @@
 import { Application, Container, Graphics, Sprite, Text, TextStyle } from "pixi.js";
 import { Edict } from "../../shared/Edicts.js";
 import { EDICT_SPRITE } from "../AssetLoader.js";
+import { makeTooltip } from "./Tooltip.js";
+import { EDICT_TOOLTIPS } from "./tooltips/EdictTooltips.js";
+
 
 const CARD_W = 90;
 const CARD_H = 130;
@@ -53,6 +56,10 @@ export function setupCardHand(
     const container = new Container();
     app.stage.addChild(container);
 
+    const { container: tooltipContainer, setContent: setTooltipContent } = makeTooltip();
+    tooltipContainer.visible = false;
+    app.stage.addChild(tooltipContainer);
+
     let ghost: Container | null = null;
     let dragCard: CardData | null = null;
 
@@ -70,6 +77,21 @@ export function setupCardHand(
             c.y = cardY;
             c.eventMode = "static";
             c.cursor = "grab";
+
+            c.on("pointerenter", (e) => {
+                if (dragCard) return;
+                const t = EDICT_TOOLTIPS[card.edict];
+                setTooltipContent(t.name, t.description);
+                tooltipContainer.visible = true;
+                tooltipContainer.x = e.global.x + 10;
+                tooltipContainer.y = e.global.y - tooltipContainer.height - 10;
+            });
+            c.on("pointermove", (e) => {
+                if (dragCard) { tooltipContainer.visible = false; return; }
+                tooltipContainer.x = e.global.x + 10;
+                tooltipContainer.y = e.global.y - tooltipContainer.height - 10;
+            });
+            c.on("pointerleave", () => { tooltipContainer.visible = false; });
 
             c.on("pointerdown", (e) => {
                 e.stopPropagation();
