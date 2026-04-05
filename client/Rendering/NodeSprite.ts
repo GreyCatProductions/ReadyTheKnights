@@ -27,6 +27,7 @@ export class NodeSprite extends Container {
     private edictIcon: Sprite;
     private workerLabel: Container = new Container();
     private stage: Container;
+    private sessionId: string;
     private buildingTooltips: Container[] = [];
 
     constructor(
@@ -38,6 +39,7 @@ export class NodeSprite extends Container {
     ) {
         super();
         this.stage = stage ?? this;
+        this.sessionId = sessionId;
 
         this.x = node.column * CELL_SIZE;
         this.y = node.row * CELL_SIZE;
@@ -145,7 +147,11 @@ export class NodeSprite extends Container {
                     this.buildingLayer.addChild(sprite);
                     const tooltipDef = BUILDING_TOOLTIPS[building.type as BuildingType];
                     if (tooltipDef) {
-                        const tip = attachTooltip(sprite, this.stage, () => tooltipDef);
+                        const isOwn = building.ownerId === this.sessionId;
+                        const tip = attachTooltip(sprite, this.stage, () => ({
+                            name: `${isOwn ? "" : "Enemy "}${tooltipDef.name}`,
+                            description: isOwn ? tooltipDef.description : tooltipDef.e_description,
+                        }));
                         this.buildingTooltips.push(tip);
                     }
                 }
