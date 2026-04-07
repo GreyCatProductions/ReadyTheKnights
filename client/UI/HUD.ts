@@ -15,7 +15,7 @@ export function setupHUD(app: Application, room: Room<GameRoomState>) {
         dayEl.textContent = `Day ${state.currentDay}`;
 
         const me = state.players.get(room.sessionId);
-        const buildings = [...state.map.nodes.values()].flatMap(node => [...node.buildings.values()]).filter(u => u.ownerId === room.sessionId);
+        const buildings = [...state.nodes.values()].flatMap(node => [...node.buildings.values()]).filter(u => u.ownerId === room.sessionId);
         if (me) updateResourcePanel(me, buildings, state, room.sessionId);
 
         const playerIds = [...state.players.keys()];
@@ -24,7 +24,7 @@ export function setupHUD(app: Application, room: Room<GameRoomState>) {
             `Time left: ${Math.max(0, Math.floor((dayEndTimestamp - Date.now()) / 1000))}s\n` +
             `Players (${state.players.size}):\n` +
             (playerIds.length ? playerIds.map(id => `  ${id}`).join('\n') : '  none') + '\n' +
-            `Nodes: ${state.map.nodes.size}`;
+            `Nodes: ${state.nodes.size}`;
     });
 
     app.ticker.add(() => {

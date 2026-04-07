@@ -3,6 +3,7 @@ import { BUILDING_DEFS } from "../../../shared/BuildingDefs.js";
 import { BuildingType } from "../../../shared/Buildings.js";
 import { CELL_SIZE, worldToGrid } from "../../../shared/Constants.js";
 import { tryAssignWorker } from "./WorkerSystem.js";
+import { v4 as uuid } from "uuid";
 
 export function createBuilding(type: BuildingType, ownerId: string): Building {
     const def = BUILDING_DEFS[type];
@@ -21,18 +22,15 @@ export function createBuilding(type: BuildingType, ownerId: string): Building {
     return b;
 }
 
-export function placeBuilding(node: GameNode, type: BuildingType, ownerId: string, state?: GameRoomState, nodeId?: string): Building {
+export function placeBuilding(type: BuildingType, ownerId: string, state: GameRoomState, nodeId: string): Building {
+    const node = state.nodes.get(nodeId)
+    if(!node)
+        return
+
     const b = createBuilding(type, ownerId);
-    node.buildings.set(type, b);
-
-    if (state && nodeId && b.resourcesNeeded.wood === 0 && b.resourcesNeeded.food === 0) {
-        state.workers.forEach((unit, id) => {
-            if (unit.assignedBuilding || unit.ownerId !== ownerId) return;
-            const { col, row } = worldToGrid(unit.posX, unit.posY);
-            if (col === node.column && row === node.row)
-                tryAssignWorker(state, id, nodeId);
-        });
-    }
-
+    b.id = uuid();
+    b.nodeId = nodeId;
+    node.buildings.set(b.id, b);
+    
     return b;
 }

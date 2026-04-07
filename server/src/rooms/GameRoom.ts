@@ -31,7 +31,7 @@ export class GameRoom extends Room {
     try {
       const defaultMapPath = path.resolve(process.cwd() + "/Resources/Maps/Debug.json");
       const mapJson = loadMapJSON(defaultMapPath);
-      createMap(this.state.map, mapJson);
+      createMap(this.state, mapJson);
       console.log("Map successfully created");
     } catch (err) {
       console.error("Map creation failed:", err);
@@ -50,8 +50,8 @@ export class GameRoom extends Room {
     }, 100);
 
     this.onMessage("move_troops", (client, { from, to, count }: { from: string, to: string, count: number }) => {
-      const fromNode = this.state.map.nodes.get(from);
-      const toNode   = this.state.map.nodes.get(to);
+      const fromNode = this.state.nodes.get(from);
+      const toNode   = this.state.nodes.get(to);
       if (!fromNode || !toNode) return;
 
       if(fromNode.ownerId != client.sessionId && toNode.ownerId != client.sessionId) return;
@@ -84,7 +84,7 @@ export class GameRoom extends Room {
     });
 
     this.onMessage("edict", (client, { nodeId, edict }: { nodeId: string, edict: Edict }) => {
-      const node = this.state.map.nodes.get(nodeId);
+      const node = this.state.nodes.get(nodeId);
       if (!node || !EDICT_CONDITIONS[edict]?.(node, client.sessionId)) return;
 
       if (edict === Edict.GrantEdict) {
@@ -99,7 +99,7 @@ export class GameRoom extends Room {
         const buildingType = EDICT_BUILDINGS[node.edict as Edict];
         if (buildingType && node.buildings.has(buildingType)) {
           this.state.workers.forEach((worker, workerId) => {
-            if (worker.assignedBuilding === buildingType) unassignWorker(this.state, workerId);
+            if (worker.assignedBuildingId === buildingType) unassignWorker(this.state, workerId);
           });
         }
         node.edict = "";
@@ -116,7 +116,7 @@ export class GameRoom extends Room {
       node.buildings.forEach((_, key) => {
         if (key !== buildingType) {
           this.state.workers.forEach((worker, workerId) => {
-            if (worker.assignedBuilding === key) unassignWorker(this.state, workerId);
+            if (worker.assignedBuildingId=== key) unassignWorker(this.state, workerId);
           });
           node.buildings.delete(key);
         }
@@ -144,11 +144,11 @@ export class GameRoom extends Room {
     player.resources.wood = WOOD_AT_START;
     player.resources.food = FOOD_AT_START;
 
-    const freeSpawns = [...this.state.map.nodes.entries()].filter(([, n]) => n.playerSpawnTile && n.ownerId === "");
+    const freeSpawns = [...this.state.nodes.entries()].filter(([, n]) => n.playerSpawnTile && n.ownerId === "");
     if (freeSpawns.length > 0) {
       const [spawnNodeId, spawnNode] = freeSpawns[Math.floor(Math.random() * freeSpawns.length)];
       spawnNode.ownerId = client.sessionId;
-      placeBuilding(spawnNode, "base", client.sessionId);
+      placeBuilding("base", client.sessionId, this.state, spawnNodeId);
 
       for (let i = 0; i < WORKERS_AT_START; i++) {
         spawnWorker(this.state, client.sessionId, spawnNodeId);

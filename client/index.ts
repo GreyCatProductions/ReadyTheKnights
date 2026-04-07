@@ -40,7 +40,7 @@ const app = new Application();
     console.log("Joined successfully!");
 
     room.onStateChange.once((state) => {
-        renderMap(state.map, world, room.sessionId, overlay, app.stage);
+        renderMap(state, world, room.sessionId, overlay, app.stage);
 
         const callbacks = Callbacks.get(room);
 
@@ -59,20 +59,20 @@ const app = new Application();
         const dirtyNodes = new Set<string>();
 
         const markDirtyAtGrid = (col: number, row: number) =>
-            state.map.nodes.forEach((node, id) => {
+            state.nodes.forEach((node, id) => {
                 if (node.column === col && node.row === row) dirtyNodes.add(id);
             });
 
         app.ticker.add(() => {
             if (dirtyNodes.size === 0) return;
             dirtyNodes.forEach(id => {
-                const node = state.map.nodes.get(id);
+                const node = state.nodes.get(id);
                 if (node) refresh(id, node);
             });
             dirtyNodes.clear();
         });
 
-        callbacks.onAdd(state.map, "nodes", (node, id) => {
+        callbacks.onAdd(state, "nodes", (node, id) => {
             refresh(id, node);
             callbacks.onChange(node, () => refresh(id, node));
             callbacks.onAdd(node, "buildings", (building) => {
@@ -98,7 +98,7 @@ const app = new Application();
         callbacks.onAdd(state, "troops",  (unit) => trackUnitDirty(unit));
         callbacks.onAdd(state, "workers", (unit) => trackUnitDirty(unit));
 
-        setupUnitRenderer(app, state, unitLayer, callbacks);
+        setupUnitRenderer(app, state, unitLayer, callbacks, app.stage);
     });
 
     setupHUD(app, room);
@@ -107,7 +107,7 @@ const app = new Application();
         const { col, row } = worldToGrid(screenX - world.x, screenY - world.y);
         const nodeId = [...nodeSprites.entries()]
             .find(([, s]) => s.x / CELL_SIZE === col && s.y / CELL_SIZE === row)?.[0];
-        const node = nodeId ? room.state.map.nodes.get(nodeId) : undefined;
+        const node = nodeId ? room.state.nodes.get(nodeId) : undefined;
         return { nodeId, node };
     }
 

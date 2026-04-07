@@ -18,6 +18,8 @@ export class NodeStats extends Schema
 }
 
 export class Building extends Schema {
+  @type("string") id: string = "";
+  @type("string") nodeId: string = "";
   @type("string") type: string = "";
   @type("string") ownerId: string = "";
   @type("number") posX: number = -1;
@@ -30,21 +32,17 @@ export class Building extends Schema {
 
 export class GameNode extends Schema
 {
+  @type("string") id: string = "";
+  @type({map: Building}) buildings = new MapSchema<Building>();
   @type("string") name: string = "Node";
   @type(NodeStats) stats: NodeStats = new NodeStats();
   @type("number") row: number = -1;
   @type("number") column: number = -1;
   @type("string") ownerId: string = "";
   @type("boolean") playerSpawnTile: boolean = false;
-  @type({map: Building}) buildings = new MapSchema<Building>();
   @type("string")  contestedBy: string = "";
   @type("number")  captureProgress: number = 0;   // 0–1
   @type("string")  edict: string = "";
-}
-
-export class GameMap extends Schema
-{
-  @type({ map: GameNode}) nodes = new MapSchema<GameNode>();
 }
 
 export abstract class Unit extends Schema {
@@ -62,9 +60,8 @@ export class Troop extends Unit {
     @type("string") type: string = ""; //not implemented
 }
 
-
 export class Worker extends Unit {
-  @type("string") assignedBuilding: string = "";
+  @type("string") assignedBuildingId: string = "";
 }
 
 export class GameRoomState extends Schema {
@@ -72,7 +69,7 @@ export class GameRoomState extends Schema {
   @type({ map: Player }) players = new MapSchema<Player>();
   @type({ map : Troop }) troops = new MapSchema<Troop>();
   @type({ map : Worker }) workers = new MapSchema<Worker>();
-  @type(GameMap) map = new GameMap();
+  @type({map: GameNode}) nodes = new MapSchema<GameNode>();
   @type("number") currentDay: number = 0;
   @type("number") dayEndTimestamp: number = 0;
 }

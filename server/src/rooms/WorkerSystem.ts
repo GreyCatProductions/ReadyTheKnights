@@ -1,4 +1,4 @@
-import { GameRoomState, Worker } from "./schema/GameRoomState.js";
+import { GameNode, GameRoomState, Worker } from "./schema/GameRoomState.js";
 import { BUILDING_DEFS } from "../../../shared/BuildingDefs.js";
 import { BuildingType } from "../../../shared/Buildings.js";
 import { worldToGrid } from "../../../shared/Constants.js";
@@ -8,15 +8,16 @@ let nodeAtPos: Map<string, string> | null = null;
 export function getNodeAtPos(state: GameRoomState): Map<string, string> {
     if (!nodeAtPos) {
         nodeAtPos = new Map();
-        state.map.nodes.forEach((node, id) => nodeAtPos!.set(`${node.column},${node.row}`, id));
+        state.nodes.forEach((node, id) => nodeAtPos!.set(`${node.column},${node.row}`, id));
     }
     return nodeAtPos;
 }
 
 export function tryAssignWorker(state: GameRoomState, workerId: string, nodeId: string) {
     const worker = state.workers.get(workerId);
-    const node = state.map.nodes.get(nodeId);
+    const node = state.nodes.get(nodeId);
     if (!worker || !node || worker.ownerId !== node.ownerId) return;
+    if (worker.assignedBuildingId) return;
 
     for (const [buildingKey, building] of node.buildings) {
         const def = BUILDING_DEFS[building.type as BuildingType];
@@ -24,7 +25,7 @@ export function tryAssignWorker(state: GameRoomState, workerId: string, nodeId: 
 
         if (building.workerCount < (def.maxWorkers as number)) {
             building.workerCount++;
-            worker.assignedBuilding = buildingKey;
+            worker.assignedBuildingId= buildingKey;
             return;
         }
     }
@@ -32,41 +33,43 @@ export function tryAssignWorker(state: GameRoomState, workerId: string, nodeId: 
 
 export function unassignWorker(state: GameRoomState, workerId: string) {
     const worker = state.workers.get(workerId);
-    if (!worker || !worker.assignedBuilding) return;
+    if (!worker || !worker.assignedBuildingId) return;
 
-    for (const node of state.map.nodes.values()) {
-        const building = node.buildings.get(worker.assignedBuilding);
+    for (const node of state.nodes.values()) {
+        const building = node.buildings.get(worker.assignedBuildingId);
         if (building && building.ownerId === worker.ownerId) {
             building.workerCount = Math.max(0, building.workerCount - 1);
             break;
         }
     }
 
-    worker.assignedBuilding = "";
+    worker.assignedBuildingId= "";
 }
 
-function nodeHasOpenWork(node: ReturnType<GameRoomState["map"]["nodes"]["get"]>): boolean {
-    if (!node) return false;
-    for (const [, building] of node.buildings) {
+function findOpenBuildingKey(node: ReturnType<GameRoomState["nodes"]["get"]>): string | null {
+    if (!node) return null;
+    for (const [key, building] of node.buildings) {
         const def = BUILDING_DEFS[building.type as BuildingType];
         if (!def?.maxWorkers || building.daysToBuild > 0) continue;
-        if (building.workerCount < (def.maxWorkers as number)) return true;
+        if (building.workerCount < (def.maxWorkers as number)) return key;
     }
-    return false;
+    return null;
 }
 
-function bfsToWork(state: GameRoomState, startNodeId: string, ownerId: string, nodeAtPos: Map<string, string>): string | null {
-
+function bfsToWork(
+    state: GameRoomState,
+    startNodeId: string,
+    ownerId: string,
+    map: Map<string, string>,
+): { nextStep: string; targetNodeId: string } | null {
     const visited = new Set<string>([startNodeId]);
-    //nodeId, firstStepNodeId
-    const queue: [string, string][] = [];
+    const queue: [string, string][] = []; // [nodeId, firstStep]
 
-    // Seed BFS with direct neighbors of start
-    const startNode = state.map.nodes.get(startNodeId);
+    const startNode = state.nodes.get(startNodeId);
     if (!startNode) return null;
 
-    for (const nid of getNeighbors(startNode, nodeAtPos)) {
-        const n = state.map.nodes.get(nid);
+    for (const nid of getNeighbors(startNode, map)) {
+        const n = state.nodes.get(nid);
         if (!n || n.ownerId !== ownerId) continue;
         visited.add(nid);
         queue.push([nid, nid]);
@@ -74,14 +77,14 @@ function bfsToWork(state: GameRoomState, startNodeId: string, ownerId: string, n
 
     while (queue.length > 0) {
         const [nodeId, firstStep] = queue.shift()!;
-        const node = state.map.nodes.get(nodeId);
+        const node = state.nodes.get(nodeId);
         if (!node || node.ownerId !== ownerId) continue;
 
-        if (nodeHasOpenWork(node)) return firstStep;
+        if (findOpenBuildingKey(node)) return { nextStep: firstStep, targetNodeId: nodeId };
 
-        for (const nid of getNeighbors(node, nodeAtPos)) {
+        for (const nid of getNeighbors(node, map)) {
             if (visited.has(nid)) continue;
-            const n = state.map.nodes.get(nid);
+            const n = state.nodes.get(nid);
             if (!n || n.ownerId !== ownerId) continue;
             visited.add(nid);
             queue.push([nid, firstStep]);
@@ -91,31 +94,76 @@ function bfsToWork(state: GameRoomState, startNodeId: string, ownerId: string, n
     return null;
 }
 
-function getNeighbors(node: { column: number; row: number }, nodeAtPos: Map<string, string>): string[] {
+/** BFS to a specific target node. Returns the first step nodeId, or null if unreachable. */
+function bfsStep(state: GameRoomState, fromNodeId: string, toNodeId: string, map: Map<string, string>): string | null {
+    if (fromNodeId === toNodeId) return null;
+    const visited = new Set<string>([fromNodeId]);
+    const queue: [string, string][] = [];
+    const startNode = state.nodes.get(fromNodeId);
+    if (!startNode) return null;
+    for (const nid of getNeighbors(startNode, map)) {
+        if (!visited.has(nid)) { visited.add(nid); queue.push([nid, nid]); }
+    }
+    while (queue.length > 0) {
+        const [nodeId, firstStep] = queue.shift()!;
+        if (nodeId === toNodeId) return firstStep;
+        const node = state.nodes.get(nodeId);
+        if (!node) continue;
+        for (const nid of getNeighbors(node, map)) {
+            if (!visited.has(nid)) { visited.add(nid); queue.push([nid, firstStep]); }
+        }
+    }
+    return null;
+}
+
+function getNeighbors(node: { column: number; row: number }, map: Map<string, string>): string[] {
     const dirs = [[1,0],[-1,0],[0,1],[0,-1]];
     const result: string[] = [];
     for (const [dc, dr] of dirs) {
-        const nid = nodeAtPos.get(`${node.column + dc},${node.row + dr}`);
+        const nid = map.get(`${node.column + dc},${node.row + dr}`);
         if (nid) result.push(nid);
     }
     return result;
 }
 
 export function tickWorkers(state: GameRoomState) {
-    const map = getNodeAtPos(state);
-    state.workers.forEach((worker, workerId) => tickWorker(state, worker, workerId, map));
+    state.workers.forEach((worker, workerId) => tickWorker(state, worker, workerId));
 }
 
-export function tickWorker(state: GameRoomState, worker: Worker, workerId: string, map: Map<string, string>) {
-    if (worker.assignedBuilding) return;
+export function tickWorker(state: GameRoomState, worker: Worker, workerId: string) {
+    if (worker.assignedBuildingId) {
+        let buildingNodeId: string | null = null;
+        state.nodes.forEach((node, nodeId) => {
+            if (node.buildings.has(worker.assignedBuildingId)) buildingNodeId = nodeId;
+        });
 
+        if (!buildingNodeId) return;
+
+        if (worker.nodeId !== buildingNodeId) {
+            const map = getNodeAtPos(state);
+            const { col, row } = worldToGrid(worker.posX, worker.posY);
+            const currentNodeId = map.get(`${col},${row}`);
+            if (currentNodeId) {
+                const result = bfsStep(state, currentNodeId, buildingNodeId, map);
+                if (result) worker.nodeId = result;
+            }
+        }
+        return;
+    }
+
+    const map = getNodeAtPos(state);
     const { col, row } = worldToGrid(worker.posX, worker.posY);
     const currentNodeId = map.get(`${col},${row}`) ?? null;
     if (!currentNodeId) return;
 
+    // Try current node first
     tryAssignWorker(state, workerId, currentNodeId);
-    if (worker.assignedBuilding) return;
+    if (worker.assignedBuildingId) return;
 
-    const nextStep = bfsToWork(state, currentNodeId, worker.ownerId, map);
-    if (nextStep) worker.nodeId = nextStep;
+    // BFS to nearest node with an open slot — claim it immediately
+    const result = bfsToWork(state, currentNodeId, worker.ownerId, map);
+    if (result) {
+        worker.nodeId = result.nextStep;
+        tryAssignWorker(state, workerId, result.targetNodeId);
+    }
 }

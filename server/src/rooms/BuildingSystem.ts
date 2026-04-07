@@ -4,11 +4,12 @@ import { BuildingType } from "../../../shared/Buildings.js";
 import { spawnWorker } from "./UnitFactory.js";
 import { Edict, EDICT_BUILDINGS } from "../../../shared/Edicts.js";
 import { placeBuilding } from "./BuildingFactory.js";
+import { hasBuilding } from "../../../shared/BuildingUtils.js";
 import { worldToGrid } from "../../../shared/Constants.js";
 import { tryAssignWorker, tickWorkers } from "./WorkerSystem.js";
 
 export function tickNodes(state: GameRoomState) {
-    state.map.nodes.forEach((node, nodeId) => {
+    state.nodes.forEach((node, nodeId) => {
         node.buildings.forEach((building) => {
             const def = BUILDING_DEFS[building.type as BuildingType];
             if (!def) return;
@@ -19,7 +20,7 @@ export function tickNodes(state: GameRoomState) {
                 building.daysToBuild--;
                 if (building.daysToBuild === 0) {
                     state.workers.forEach((worker, workerId) => {
-                        if (worker.ownerId !== building.ownerId || worker.assignedBuilding) return;
+                        if (worker.ownerId !== building.ownerId || worker.assignedBuildingId) return;
                         const { col, row } = worldToGrid(worker.posX, worker.posY);
                         if (col === node.column && row === node.row)
                             tryAssignWorker(state, workerId, nodeId);
@@ -55,7 +56,7 @@ export function fulfillDemand(building: Building, state: GameRoomState) {
 
 function getMaxPopulation(ownerId: string, state: GameRoomState): number {
     let max = 0;
-    state.map.nodes.forEach(node => {
+    state.nodes.forEach(node => {
         node.buildings.forEach(b => {
             if (b.ownerId === ownerId) max += b.populationMaxIncrease ?? 0;
         });
@@ -91,8 +92,8 @@ function handleResource(b: Building, def: BuildingDef, node: GameNode, state: Ga
 function handleEdict(node: GameNode, nodeId: string, state: GameRoomState) {
     const buildingType = EDICT_BUILDINGS[node.edict as Edict];
     if (!buildingType) return;
-    if (node.buildings.has(buildingType)) return;
+    if (hasBuilding(node, buildingType)) return;
 
-    placeBuilding(node, buildingType, node.ownerId, state, nodeId);
+    placeBuilding(buildingType, node.ownerId, state, nodeId);
     console.log(`Built ${buildingType} on ${nodeId} from edict "${node.edict}"`);
 }

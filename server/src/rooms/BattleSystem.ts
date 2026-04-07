@@ -15,7 +15,7 @@ const captureProgress = new Map<string, { contesterId: string; elapsed: number }
  */
 function buildNodePosMap(state: GameRoomState): Map<string, string> {
     const map = new Map<string, string>();
-    state.map.nodes.forEach((node, id) => map.set(`${node.column},${node.row}`, id));
+    state.nodes.forEach((node, id) => map.set(`${node.column},${node.row}`, id));
     return map;
 }
 
@@ -47,7 +47,7 @@ function clearCaptureState(nodeId: string, node: GameNode) {
 
 function tickCapture(state: GameRoomState, unitsByNode: Map<string, Map<string, string[]>>, deltaMs: number) {
     unitsByNode.forEach((byOwner, nodeId) => {
-        const node = state.map.nodes.get(nodeId);
+        const node = state.nodes.get(nodeId);
         if (!node) return;
 
         // Multiple players present
@@ -88,7 +88,7 @@ function tickCapture(state: GameRoomState, unitsByNode: Map<string, Map<string, 
     for (const [nodeId, prog] of captureProgress) {
         const byOwner = unitsByNode.get(nodeId);
         if (!byOwner?.has(prog.contesterId)) {
-            const node = state.map.nodes.get(nodeId);
+            const node = state.nodes.get(nodeId);
             if (node) clearCaptureState(nodeId, node);
             else captureProgress.delete(nodeId);
         }

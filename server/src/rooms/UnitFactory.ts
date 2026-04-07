@@ -5,7 +5,7 @@ import { UNIT_DEFS } from "../../../shared/UnitDefs.js";
 import { UnitType } from "../../../shared/Units.js";
 
 export function spawnSoldier(state: GameRoomState, ownerId: string, nodeId: string, type: UnitType): void {
-    const node = state.map.nodes.get(nodeId);
+    const node = state.nodes.get(nodeId);
     if (!node) return;
 
     const def = UNIT_DEFS[type];
@@ -23,7 +23,7 @@ export function spawnSoldier(state: GameRoomState, ownerId: string, nodeId: stri
 }
 
 export function spawnWorker(state: GameRoomState, ownerId: string, nodeId: string): void {
-    const node = state.map.nodes.get(nodeId);
+    const node = state.nodes.get(nodeId);
     if (!node) return;
 
     const def = UNIT_DEFS[UnitType.Worker];
