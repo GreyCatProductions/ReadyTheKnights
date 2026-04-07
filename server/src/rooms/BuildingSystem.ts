@@ -5,7 +5,7 @@ import { spawnWorker } from "./UnitFactory.js";
 import { Edict, EDICT_BUILDINGS } from "../../../shared/Edicts.js";
 import { placeBuilding } from "./BuildingFactory.js";
 import { worldToGrid } from "../../../shared/Constants.js";
-import { tryAssignWorker } from "./WorkerSystem.js";
+import { tryAssignWorker, tickWorkers } from "./WorkerSystem.js";
 
 export function tickNodes(state: GameRoomState) {
     state.map.nodes.forEach((node, nodeId) => {

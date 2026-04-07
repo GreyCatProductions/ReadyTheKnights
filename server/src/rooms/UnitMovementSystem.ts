@@ -1,6 +1,6 @@
 import { GameRoomState } from "./schema/GameRoomState.js";
 import { CELL_SIZE, worldToGrid } from "../../../shared/Constants.js";
-import { tryAssignWorker, unassignWorker } from "./WorkerSystem.js";
+import { unassignWorker, tickWorker, getNodeAtPos } from "./WorkerSystem.js";
 
 const SPEED = 40; // pixels per second
 const ARRIVAL_THRESHOLD = 4;
@@ -60,12 +60,8 @@ function tickUnit(
         lastPhysNodeId.set(id, physNodeId);
         if (prevPhysNodeId !== undefined && isWorker) {
             unassignWorker(state, id);
-            for (const [nid, n] of state.map.nodes) {
-                if (n.column === col && n.row === row) {
-                    tryAssignWorker(state, id, nid);
-                    break;
-                }
-            }
+            const worker = state.workers.get(id);
+            if (worker) tickWorker(state, worker, id, getNodeAtPos(state));
         }
     }
 }

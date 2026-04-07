@@ -4,7 +4,7 @@ import { placeBuilding } from "./BuildingFactory.js";
 import { loadMapJSON } from "../../../shared/MapCreation/MapTranslator.js";
 import { tickNodes, fulfillDemand } from "./BuildingSystem.js";
 import { tickUnitMovement, removeUnitTarget } from "./UnitMovementSystem.js";
-import { unassignWorker } from "./WorkerSystem.js";
+import { tickWorkers, unassignWorker } from "./WorkerSystem.js";
 import { tickBattles } from "./BattleSystem.js";
 import path from "node:path";
 import { createMap } from "./MapGeneration/MapGenerator.js";
@@ -132,6 +132,7 @@ export class GameRoom extends Room {
     this.state.dayEndTimestamp = Date.now() + this.DAY_DURATION_MS;
     tickNodes(this.state);
     consumeFood(this.state);
+    tickWorkers(this.state);
     console.log(`Day ${this.state.currentDay} started`);
   }
 
