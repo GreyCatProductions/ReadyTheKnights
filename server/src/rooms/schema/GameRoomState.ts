@@ -30,10 +30,17 @@ export class Building extends Schema {
   @type("number") daysToBuild: number = 1;
 }
 
+export class WorldObject extends Schema {
+  @type("string") type: string = "";
+  @type("number") posX: number = 0;
+  @type("number") posY: number = 0;
+}
+
 export class GameNode extends Schema
 {
   @type("string") id: string = "";
   @type({map: Building}) buildings = new MapSchema<Building>();
+  @type({map: WorldObject}) worldObjects = new MapSchema<WorldObject>();
   @type("string") name: string = "Node";
   @type(NodeStats) stats: NodeStats = new NodeStats();
   @type("number") row: number = -1;

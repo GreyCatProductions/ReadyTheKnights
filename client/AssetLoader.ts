@@ -60,6 +60,7 @@ const SPRITE_MANIFEST: Record<string, string> = {
     annex: '/sprites/edicts/annex.png',
 
     grass17: '/sprites/world/grass17.png',
+    tree1: 'sprites/world/tree.png',
 };
 
 export async function LoadAssets() {

@@ -1,5 +1,5 @@
 import { AnimatedSprite, Container, Graphics, Rectangle, Sprite, Text, Texture } from "pixi.js";
-import { Building, GameNode, NodeStats } from "../../server/src/rooms/schema/GameRoomState";
+import { Building, GameNode, NodeStats, WorldObject } from "../../server/src/rooms/schema/GameRoomState";
 import { MapSchema } from "@colyseus/schema";
 import { showContextMenu } from "../UI/ContextMenu";
 import { RESOURCE_SPRITES } from "../UI/SpriteKeyMap";
@@ -20,6 +20,7 @@ export class NodeSprite extends Container {
 
     private bgSprite: Sprite;
     private bgTint: Graphics;
+    private resourceSpriteLayer: Container;
     private buildingLayer: Container;
     private resourceLayer: Container;
     private statsLayer: Container;
@@ -88,6 +89,7 @@ export class NodeSprite extends Container {
         label.x = CELL_SIZE / 2;
         label.y = CELL_SIZE / 6;
 
+        this.resourceSpriteLayer = new Container();
         this.buildingLayer = new Container();
         this.resourceLayer = new Container();
         this.resourceLayer.y = CELL_SIZE - 22;
@@ -108,6 +110,7 @@ export class NodeSprite extends Container {
 
         this.addChild(this.bgSprite);
         this.addChild(this.bgTint);
+        this.addChild(this.resourceSpriteLayer);
         this.addChild(this.buildingLayer);
         this.addChild(this.statsLayer);
         this.addChild(this.resourceLayer);
@@ -196,6 +199,23 @@ export class NodeSprite extends Container {
             this.statsLayer.addChild(icon);
             offsetX -= 2;
         }
+
+    }
+
+    updateWorldObjects(worldObjects: MapSchema<WorldObject>) {
+        this.resourceSpriteLayer.removeChildren();
+        const WORLD_OBJECT_SPRITE: Record<string, string> = {
+            tree: "tree1",
+        };
+        worldObjects.forEach((obj) => {
+            const alias = WORLD_OBJECT_SPRITE[obj.type];
+            if (!alias) return;
+            const sprite = new Sprite(Texture.from(alias));
+            sprite.anchor.set(0.5);
+            sprite.x = obj.posX;
+            sprite.y = obj.posY;
+            this.resourceSpriteLayer.addChild(sprite);
+        });
     }
 
     Color = 0xffffff
