@@ -1,14 +1,11 @@
 import { GameNode, GameRoomState } from "./schema/GameRoomState.js";
-import { CELL_SIZE, worldToGrid } from "../../../shared/Constants.js";
+import { CELL_SIZE, worldToGrid, BUILDING_OBSTACLE_RADIUS, TREE_OBSTACLE_RADIUS, UNIT_OBSTACLE_RADIUS } from "../../../shared/Constants.js";
 import { unassignWorker, tickWorker } from "./WorkerSystem.js";
 
 const SPEED = 40; // pixels per second
 const ARRIVAL_THRESHOLD = 4;
 const MIN_WAIT_MS = 1000;
 const MAX_WAIT_MS = 5000;
-
-const BUILDING_RADIUS = 40;
-const TREE_RADIUS = 16;
 
 type Target = { x: number; y: number };
 type Obstacle = { x: number; y: number; radius: number };
@@ -22,43 +19,63 @@ function getObstacles(node: GameNode): Obstacle[] {
     const originY = node.row * CELL_SIZE;
     const obstacles: Obstacle[] = [];
     for (const b of node.buildings.values())
-        obstacles.push({ x: originX + b.posX, y: originY + b.posY, radius: BUILDING_RADIUS });
+        obstacles.push({ x: originX + b.posX, y: originY + b.posY, radius: BUILDING_OBSTACLE_RADIUS });
     for (const obj of node.worldObjects.values())
-        obstacles.push({ x: originX + obj.posX, y: originY + obj.posY, radius: TREE_RADIUS });
+        obstacles.push({ x: originX + obj.posX, y: originY + obj.posY, radius: TREE_OBSTACLE_RADIUS });
     return obstacles;
 }
 
 function isClearOfObstacles(x: number, y: number, obstacles: Obstacle[]): boolean {
     for (const { x: ox, y: oy, radius } of obstacles) {
+        const r = radius + UNIT_OBSTACLE_RADIUS;
         const dx = x - ox, dy = y - oy;
-        if (dx * dx + dy * dy < radius * radius) return false;
+        if (dx * dx + dy * dy < r * r) return false;
     }
     return true;
 }
 
-function randomPointOnNode(col: number, row: number, obstacles: Obstacle[]): Target {
-    const margin = 16;
-    for (let attempt = 0; attempt < 10; attempt++) {
-        const x = col * CELL_SIZE + margin + Math.random() * (CELL_SIZE - margin * 2);
-        const y = row * CELL_SIZE + margin + Math.random() * (CELL_SIZE - margin * 2);
-        if (isClearOfObstacles(x, y, obstacles)) return { x, y };
-    }
-    return { x: col * CELL_SIZE + margin, y: row * CELL_SIZE + margin };
-}
-
-function applyObstacleRepulsion(unit: { posX: number; posY: number }, obstacles: Obstacle[]): void {
+function hasLineOfSight(x1: number, y1: number, x2: number, y2: number, obstacles: Obstacle[]): boolean {
+    const dx = x2 - x1, dy = y2 - y1;
+    const lenSq = dx * dx + dy * dy;
+    if (lenSq === 0) return true;
     for (const { x: ox, y: oy, radius } of obstacles) {
-        const dx = unit.posX - ox, dy = unit.posY - oy;
-        const distSq = dx * dx + dy * dy;
-        if (distSq < radius * radius && distSq > 0) {
-            const dist = Math.sqrt(distSq);
-            unit.posX += (dx / dist) * (radius - dist);
-            unit.posY += (dy / dist) * (radius - dist);
-        }
+        const r = radius + UNIT_OBSTACLE_RADIUS;
+        const fx = x1 - ox, fy = y1 - oy;
+        const t = Math.max(0, Math.min(1, -(fx * dx + fy * dy) / lenSq));
+        const cx = fx + t * dx, cy = fy + t * dy;
+        if (cx * cx + cy * cy < r * r) return false;
     }
+    return true;
 }
 
-function handleArrival(id: string, col: number, row: number, obstacles: Obstacle[]): boolean {
+const NODE_MARGIN = 16;
+const ANGLE_STEPS = 24;
+const MIN_DIST = 20;
+
+function randomPointOnNode(col: number, row: number, obstacles: Obstacle[], fromX: number, fromY: number): Target | null {
+    const nodeX = col * CELL_SIZE;
+    const nodeY = row * CELL_SIZE;
+    const maxDist = CELL_SIZE * 0.6;
+    const angleOffset = Math.random() * Math.PI * 2;
+    const fromClear = isClearOfObstacles(fromX, fromY, obstacles); 
+
+    for (let i = 0; i < ANGLE_STEPS; i++) {
+        const angle = angleOffset + (i / ANGLE_STEPS) * Math.PI * 2;
+        const dist = MIN_DIST + Math.random() * (maxDist - MIN_DIST);
+        const x = fromX + Math.cos(angle) * dist;
+        const y = fromY + Math.sin(angle) * dist;
+
+        if (x < nodeX + NODE_MARGIN || x > nodeX + CELL_SIZE - NODE_MARGIN) continue;
+        if (y < nodeY + NODE_MARGIN || y > nodeY + CELL_SIZE - NODE_MARGIN) continue;
+        if (!isClearOfObstacles(x, y, obstacles)) continue;
+        if (fromClear && !hasLineOfSight(fromX, fromY, x, y, obstacles)) continue;
+
+        return { x, y };
+    }
+    return null;
+}
+
+function handleArrival(id: string, col: number, row: number, obstacles: Obstacle[], fromX: number, fromY: number): boolean {
     const now = Date.now();
     const wait = waitUntil.get(id);
     if (!wait) {
@@ -67,7 +84,8 @@ function handleArrival(id: string, col: number, row: number, obstacles: Obstacle
     }
     if (now < wait) return true;
     waitUntil.delete(id);
-    targets.set(id, randomPointOnNode(col, row, obstacles));
+    const pt = randomPointOnNode(col, row, obstacles, fromX, fromY);
+    if (pt) targets.set(id, pt);
     return false;
 }
 
@@ -92,25 +110,56 @@ function tickUnit(
     dt: number,
     isWorker: boolean,
 ) {
-    const node = state.nodes.get(unit.nodeId);
-    if (!node) return;
+    const targetNode = state.nodes.get(unit.nodeId);
+    if (!targetNode) return;
 
-    const obstacles = getObstacles(node);
-    if (!targets.has(id)) targets.set(id, randomPointOnNode(node.column, node.row, obstacles));
+    const { col: physCol, row: physRow } = worldToGrid(unit.posX, unit.posY);
+    const onTargetNode = physCol === targetNode.column && physRow === targetNode.row;
+    const physNode = [...state.nodes.entries()].find(([, n]) => n.column === physCol && n.row === physRow)?.[1] ?? targetNode;
+    const obstacles = getObstacles(physNode);
 
-    const target = targets.get(id)!;
+    // Still crossing to the target node
+    if (!onTargetNode) {
+        targets.delete(id);
+        const cx = targetNode.column * CELL_SIZE + CELL_SIZE / 2;
+        const cy = targetNode.row * CELL_SIZE + CELL_SIZE / 2;
+        const dx = cx - unit.posX, dy = cy - unit.posY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist > ARRIVAL_THRESHOLD) {
+            unit.posX += (dx / dist) * SPEED * dt;
+            unit.posY += (dy / dist) * SPEED * dt;
+        }
+        handleNodeChange(state, unit, id, isWorker);
+        return;
+    }
+
+    if (!targets.has(id)) {
+        const pt = randomPointOnNode(targetNode.column, targetNode.row, obstacles, unit.posX, unit.posY);
+        if (pt) targets.set(id, pt);
+    }
+
+    // Invalidate target if lost LOS and not in obs
+    const existing = targets.get(id);
+    if (existing && isClearOfObstacles(unit.posX, unit.posY, obstacles)
+        && !hasLineOfSight(unit.posX, unit.posY, existing.x, existing.y, obstacles)) {
+        targets.delete(id);
+        return;
+    }
+
+    const target = targets.get(id);
+    if (!target) return;
+
     const dx = target.x - unit.posX;
     const dy = target.y - unit.posY;
     const dist = Math.sqrt(dx * dx + dy * dy);
 
     if (dist < ARRIVAL_THRESHOLD) {
-        handleArrival(id, node.column, node.row, obstacles);
+        handleArrival(id, targetNode.column, targetNode.row, obstacles, unit.posX, unit.posY);
         return;
     }
 
     unit.posX += (dx / dist) * SPEED * dt;
     unit.posY += (dy / dist) * SPEED * dt;
-    applyObstacleRepulsion(unit, obstacles);
     handleNodeChange(state, unit, id, isWorker);
 }
 

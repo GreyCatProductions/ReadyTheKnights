@@ -9,6 +9,7 @@ import { setupTroopMoveOverlay } from "./Rendering/TroopMoveOverlay";
 import { setupHUD } from "./UI/HUD";
 import { setupCardHand as setupEdicts } from "./UI/CardHand";
 import { setupCamera } from "./Camera";
+import { setupDebugOverlay } from "./Rendering/DebugOverlay";
 import { LoadAssets } from "./AssetLoader";
 import { Edict } from "../shared/Edicts";
 import { EDICT_CONDITIONS } from "../shared/EdictConditions"
@@ -99,6 +100,7 @@ const app = new Application();
         callbacks.onAdd(state, "workers", (unit) => trackUnitDirty(unit));
 
         setupUnitRenderer(app, state, unitLayer, callbacks, app.stage);
+        setupDebugOverlay(app, world, state);
     });
 
     setupHUD(app, room);

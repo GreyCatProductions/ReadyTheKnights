@@ -2,8 +2,10 @@ import { GameMapJSON } from "../../../../shared/MapCreation/MapTranslator.js";
 import { GameRoomState, GameNode, WorldObject } from "../schema/GameRoomState.js";
 import { CELL_SIZE } from "../../../../shared/Constants.js";
 
-const TREE_COUNT = 4;
-const TREE_MARGIN = 20;
+const MAX_TREE_COUNT = 4;
+const EDGE_MARGIN = 32;
+const TREE_MIN_SPACING = 64; //total distance
+const CENTER_EXCLUSION = 48; //radius
 
 function seededRng(seed: number): () => number {
     let s = seed >>> 0;
@@ -21,14 +23,40 @@ function hashId(id: string): number {
 
 function placeTrees(node: GameNode, nodeId: string) {
     const rng = seededRng(hashId(nodeId));
-    const range = CELL_SIZE - TREE_MARGIN * 2;
-    for (let i = 0; i < TREE_COUNT; i++) {
+    const range = CELL_SIZE - EDGE_MARGIN * 2;
+    const center = CELL_SIZE / 2;
+    const placed: { x: number; y: number }[] = [];
+
+    let placed_count = 0;
+    for (let attempt = 0; attempt < MAX_TREE_COUNT * 20 && placed_count < MAX_TREE_COUNT; attempt++) {
+        const x = EDGE_MARGIN + Math.floor(rng() * range);
+        const y = EDGE_MARGIN + Math.floor(rng() * range);
+
+        // Skip if too close to center
+        const cdx = x - center, cdy = y - center;
+        if (cdx * cdx + cdy * cdy < CENTER_EXCLUSION * CENTER_EXCLUSION) continue;
+
+        // Skip if too close to another tree
+        let tooClose = false;
+        for (const p of placed) {
+            const dx = x - p.x, dy = y - p.y;
+            if (dx * dx + dy * dy < TREE_MIN_SPACING * TREE_MIN_SPACING) { tooClose = true; break; }
+        }
+        if (tooClose) continue;
+
+        placed.push({ x, y });
+        placed_count++;
+    }
+
+    // y sort
+    placed.sort((a, b) => a.y - b.y);
+    placed.forEach(({ x, y }, i) => {
         const obj = new WorldObject();
         obj.type = "tree";
-        obj.posX = TREE_MARGIN + Math.floor(rng() * range);
-        obj.posY = TREE_MARGIN + Math.floor(rng() * range);
+        obj.posX = x;
+        obj.posY = y;
         node.worldObjects.set(`${nodeId}_tree_${i}`, obj);
-    }
+    });
 }
 
 export function createMap(gameMap: GameRoomState, mapJson: GameMapJSON) {
