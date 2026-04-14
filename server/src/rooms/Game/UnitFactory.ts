@@ -1,8 +1,8 @@
 import { GameRoomState, Troop, Worker } from "./schema/GameRoomState.js";
 import { v4 as uuid } from "uuid";
-import { CELL_SIZE } from "../../../shared/Constants.js";
-import { UNIT_DEFS } from "../../../shared/UnitDefs.js";
-import { UnitType } from "../../../shared/Units.js";
+import { CELL_SIZE } from "../../../../shared/Constants.js";
+import { UNIT_DEFS } from "../../../../shared/UnitDefs.js";
+import { UnitType } from "../../../../shared/Units.js";
 
 export function spawnSoldier(state: GameRoomState, ownerId: string, nodeId: string, type: UnitType): void {
     const node = state.nodes.get(nodeId);

@@ -1,11 +1,11 @@
 import { Building, GameNode, GameRoomState } from "./schema/GameRoomState.js";
-import { BuildingDef, BUILDING_DEFS } from "../../../shared/BuildingDefs.js";
-import { BuildingType } from "../../../shared/Buildings.js";
+import { BuildingDef, BUILDING_DEFS } from "../../../../shared/BuildingDefs.js";
+import { BuildingType } from "../../../../shared/Buildings.js";
 import { spawnWorker } from "./UnitFactory.js";
-import { Edict, EDICT_BUILDINGS } from "../../../shared/Edicts.js";
+import { Edict, EDICT_BUILDINGS } from "../../../../shared/Edicts.js";
 import { placeBuilding } from "./BuildingFactory.js";
-import { hasBuilding } from "../../../shared/BuildingUtils.js";
-import { worldToGrid } from "../../../shared/Constants.js";
+import { hasBuilding } from "../../../../shared/BuildingUtils.js";
+import { worldToGrid } from "../../../../shared/Constants.js";
 import { tryAssignWorker, tickWorkers } from "./WorkerSystem.js";
 
 export function tickNodes(state: GameRoomState) {

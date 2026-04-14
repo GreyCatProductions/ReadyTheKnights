@@ -1,6 +1,6 @@
-import { GameMapJSON } from "../../../../shared/MapCreation/MapTranslator.js";
+import { GameMapJSON } from "../../../../../shared/MapCreation/MapTranslator.js";
 import { GameRoomState, GameNode, WorldObject } from "../schema/GameRoomState.js";
-import { CELL_SIZE } from "../../../../shared/Constants.js";
+import { CELL_SIZE } from "../../../../../shared/Constants.js";
 
 const MAX_TREE_COUNT = 4;
 const EDGE_MARGIN = 32;

@@ -2,7 +2,6 @@ export const CELL_SIZE = 128+64;
 
 export const BUILDING_OBSTACLE_RADIUS = 48;
 export const TREE_OBSTACLE_RADIUS = 24;
-export const UNIT_OBSTACLE_RADIUS = 8;
 
 export function worldToGrid(posX: number, posY: number): { col: number; row: number } {
     return {

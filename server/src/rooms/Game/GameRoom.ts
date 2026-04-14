@@ -1,21 +1,22 @@
 import { Room, Client, CloseCode } from "colyseus";
 import { GameRoomState, Player } from "./schema/GameRoomState.js";
 import { placeBuilding } from "./BuildingFactory.js";
-import { loadMapJSON } from "../../../shared/MapCreation/MapTranslator.js";
+import { loadMapJSON } from "../../../../shared/MapCreation/MapTranslator.js";
 import { tickNodes, fulfillDemand } from "./BuildingSystem.js";
-import { tickUnitMovement, removeUnitTarget } from "./UnitMovementSystem.js";
+import { tickUnitMovement, removeUnitTarget, setUnitMacroPath } from "./UnitMovementSystem.js";
 import { tickWorkers, unassignWorker } from "./WorkerSystem.js";
 import { tickBattles } from "./BattleSystem.js";
 import path from "node:path";
 import { createMap } from "./MapGeneration/MapGenerator.js";
-import { worldToGrid } from "../../../shared/Constants.js"
+import { worldToGrid } from "../../../../shared/Constants.js"
 import { spawnSoldier, spawnWorker } from "./UnitFactory.js";
-import { BuildingType } from "../../../shared/Buildings.js";
-import { EDICT_BUILDINGS } from "../../../shared/Edicts.js";
-import { Edict } from "../../../shared/Edicts.js";
+import { BuildingType } from "../../../../shared/Buildings.js";
+import { EDICT_BUILDINGS } from "../../../../shared/Edicts.js";
+import { Edict } from "../../../../shared/Edicts.js";
 import { consumeFood } from "./FoodConsumption.js";
-import { EDICT_CONDITIONS } from "../../../shared/EdictConditions.js";
-import { UnitType } from "../../../shared/Units.js";
+import { EDICT_CONDITIONS } from "../../../../shared/EdictConditions.js";
+import { UnitType } from "../../../../shared/Units.js";
+import { clearWalkabilityCache } from "./Pathfinding.js";
 
 const WORKERS_AT_START = 5;
 const SOLDIERS_AT_START = 3;
@@ -51,14 +52,14 @@ export class GameRoom extends Room {
 
     this.onMessage("move_troops", (client, { from, to, count }: { from: string, to: string, count: number }) => {
       const fromNode = this.state.nodes.get(from);
-      const toNode   = this.state.nodes.get(to);
+      const toNode = this.state.nodes.get(to);
       if (!fromNode || !toNode) return;
 
-      if(fromNode.ownerId != client.sessionId && toNode.ownerId != client.sessionId) return;
+      if (fromNode.ownerId != client.sessionId && toNode.ownerId != client.sessionId) return;
 
       const colDiff = Math.abs(toNode.column - fromNode.column);
-      const rowDiff = Math.abs(toNode.row    - fromNode.row);
-      if (colDiff + rowDiff !== 1) return;
+      const rowDiff = Math.abs(toNode.row - fromNode.row);
+      //if (colDiff + rowDiff !== 1) return;
 
       const idle: string[] = [];
       const inTransit: string[] = [];
@@ -66,18 +67,16 @@ export class GameRoom extends Room {
         if (troop.ownerId !== client.sessionId) return;
         const { col, row } = worldToGrid(troop.posX, troop.posY);
         if (col !== fromNode.column || row !== fromNode.row) return;
-        if (troop.nodeId !== from)       inTransit.push(id);
-        else                            idle.push(id);
+        if (troop.nodeId !== from) inTransit.push(id);
+        else idle.push(id);
       });
       const candidates = [...idle, ...inTransit];
 
-      if(candidates.length === 0) return;
+      if (candidates.length === 0) return;
 
       const toMove = candidates.slice(0, count);
       for (const id of toMove) {
-        const unit = this.state.troops.get(id)!;
-        unit.nodeId = to;
-        removeUnitTarget(id, this.state);
+        setUnitMacroPath(this.state, id, to);
       }
 
       console.log(`${client.sessionId} moving ${toMove.length}/${count} units: ${from} → ${to}`);
@@ -105,7 +104,7 @@ export class GameRoom extends Room {
         node.edict = "";
         return;
       }
-      
+
       if (node.edict) return;
       if (node.buildings.has(BuildingType.Base)) return;
 
@@ -116,12 +115,12 @@ export class GameRoom extends Room {
       node.buildings.forEach((_, key) => {
         if (key !== buildingType) {
           this.state.workers.forEach((worker, workerId) => {
-            if (worker.assignedBuildingId=== key) unassignWorker(this.state, workerId);
+            if (worker.assignedBuildingId === key) unassignWorker(this.state, workerId);
           });
           node.buildings.delete(key);
         }
       });
-
+      clearWalkabilityCache(nodeId);
       node.edict = edict;
       console.log(`${client.sessionId} issued "${edict}" on ${nodeId}`);
     });

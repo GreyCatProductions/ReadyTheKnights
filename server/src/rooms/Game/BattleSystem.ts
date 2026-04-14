@@ -1,6 +1,6 @@
 import { GameRoomState, GameNode } from "./schema/GameRoomState.js";
 import { removeUnitTarget } from "./UnitMovementSystem.js";
-import { worldToGrid } from "../../../shared/Constants.js";
+import { worldToGrid } from "../../../../shared/Constants.js";
 
 const COMBAT_INTERVAL_MS = 500;
 const CAPTURE_TIME_MS = 5000;

@@ -1,9 +1,9 @@
-import { Building, GameNode, GameRoomState } from "./schema/GameRoomState.js";
-import { BUILDING_DEFS } from "../../../shared/BuildingDefs.js";
-import { BuildingType } from "../../../shared/Buildings.js";
-import { CELL_SIZE, worldToGrid } from "../../../shared/Constants.js";
-import { tryAssignWorker } from "./WorkerSystem.js";
+import { Building, GameRoomState } from "./schema/GameRoomState.js";
+import { BUILDING_DEFS } from "../../../../shared/BuildingDefs.js";
+import { BuildingType } from "../../../../shared/Buildings.js";
+import { CELL_SIZE} from "../../../../shared/Constants.js";
 import { v4 as uuid } from "uuid";
+import { clearWalkabilityCache } from "./Pathfinding.js";
 
 export function createBuilding(type: BuildingType, ownerId: string): Building {
     const def = BUILDING_DEFS[type];
@@ -31,6 +31,6 @@ export function placeBuilding(type: BuildingType, ownerId: string, state: GameRo
     b.id = uuid();
     b.nodeId = nodeId;
     node.buildings.set(b.id, b);
-    
+    clearWalkabilityCache(nodeId);
     return b;
 }

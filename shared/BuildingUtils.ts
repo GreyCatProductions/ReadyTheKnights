@@ -1,4 +1,4 @@
-import type { Building, GameNode, GameRoomState } from "../server/src/rooms/schema/GameRoomState.js";
+import type { Building, GameNode, GameRoomState } from "../server/src/rooms/Game/schema/GameRoomState.js";
 
 export function findBuildingById(state: GameRoomState, buildingId: string): { building: Building; node: GameNode; nodeId: string } | null {
     for (const [nodeId, node] of state.nodes) {

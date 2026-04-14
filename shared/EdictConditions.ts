@@ -1,4 +1,4 @@
-import { GameNode } from "../server/src/rooms/schema/GameRoomState.js";
+import { GameNode } from "../server/src/rooms/Game/schema/GameRoomState.js";
 import { Edict } from "./Edicts.js";
 import { BuildingType } from "./Buildings.js";
 

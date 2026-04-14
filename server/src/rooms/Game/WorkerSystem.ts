@@ -1,7 +1,7 @@
 import { GameNode, GameRoomState, Worker } from "./schema/GameRoomState.js";
-import { BUILDING_DEFS } from "../../../shared/BuildingDefs.js";
-import { BuildingType } from "../../../shared/Buildings.js";
-import { worldToGrid } from "../../../shared/Constants.js";
+import { BUILDING_DEFS } from "../../../../shared/BuildingDefs.js";
+import { BuildingType } from "../../../../shared/Buildings.js";
+import { worldToGrid } from "../../../../shared/Constants.js";
 
 let nodeAtPos: Map<string, string> | null = null;
 

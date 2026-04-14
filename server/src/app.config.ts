@@ -10,7 +10,7 @@ import {
 /**
  * Import your Room files
  */
-import { GameRoom } from "./rooms/GameRoom.js";
+import { GameRoom } from "./rooms/Game/GameRoom.js";
 
 const server = defineServer({
     /**
